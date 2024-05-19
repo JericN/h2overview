@@ -1,0 +1,47 @@
+{
+    "users": {
+        "{userid1}": {
+            "name": "John Doe",
+            "email": "johndoe@email.com",
+            "serial": "H2O-1234"
+        }
+    },
+    "devices": {
+        "{serial1}": {
+            "details": {
+                "serial": "H2O-1234",
+                "model": "Basic",
+                "location": {
+                    "latitude": "37.7749",
+                    "longitude": "-122.4194"
+                }
+            },
+            "preference": {
+                "preference1": "false",
+                "preference2": "false",
+                "leak_small": {
+                    "duration": "10",
+                    "time": {
+                        "start": "12:00",
+                        "end": "13:00"
+                    }
+                }
+            },
+            "flags": {
+                "valve": "false",
+                "big_leak": "false",
+                "small_leak": "false",
+                "big_leak_detected": "false",
+                "small_leak_detected": "false"
+            },
+            "data": {
+                "water_flow": {
+                    "timestamp" : "value",
+                    "1716132349": 0.5,
+                    "1716132350": 0.6,
+                    "1716132351": 0.7
+                }
+            }
+        }
+    }
+}
