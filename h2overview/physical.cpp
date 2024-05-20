@@ -7,10 +7,12 @@ Physical::Physical() {
   // Constructor
 }
 
+// Interrupt handler
 void Physical::pulse_counter() {
   Physical::PULSE++;
 }
 
+// Initialize pins
 void Physical::initialize_pins() {
   pinMode(FLOW_SENSOR_PIN, INPUT);
   pinMode(SOLENOID_RELAY_PIN, OUTPUT);
@@ -18,10 +20,12 @@ void Physical::initialize_pins() {
   attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), Physical::pulse_counter, RISING);
 }
 
+// Get the state of the solenoid
 int Physical::get_solenoid_state() {
   return digitalRead(SOLENOID_RELAY_PIN);
 }
 
+// Get the state of the solenoid button
 int Physical::get_solenoid_button_press() {
   int reading = digitalRead(SOLENOID_BUTTON_PIN);
 
@@ -42,16 +46,19 @@ int Physical::get_solenoid_button_press() {
   return 0;
 }
 
+// Set the state of the solenoid
 void Physical::set_solenoid_state(int state) {
   digitalWrite(SOLENOID_RELAY_PIN, state);
 }
 
+// Read the water flow rate
 float Physical::read_waterflow_rate() {
   Physical::PULSE = 0;
   delay(1000);
   return 2.663 * Physical::PULSE;
 }
 
+// Read the water pressure
 float Physical::read_water_pressure() {
   float voltage = analogRead(PRESSURE_SENSOR_PIN) * 5.0 / 1023.0;
   float pressure = (voltage - PRESSURE_OFFSET) * (100.0 / (4.5 - BASELINE_PRESSURE_VOLTAGE));
