@@ -1,6 +1,6 @@
 #include "physical.h"
 
-// Define the static variable
+// Initialize static variable
 unsigned long Physical::PULSE = 0;
 
 Physical::Physical() {

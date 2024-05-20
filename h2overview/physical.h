@@ -11,6 +11,7 @@
 class Physical {
  public:
   Physical();
+
   void initialize_pins();
   int get_solenoid_state();
   void set_solenoid_state(int state);
