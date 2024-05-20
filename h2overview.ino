@@ -5,14 +5,26 @@
 #define flowSensorPin         D2
 #define flowCalibrationFactor 4.5 // TODO: Calibrate this value
 
-#define solenoidRelayPin      D3
+
+#define solenoidButtonPin     D3
+#define solenoidRelayPin      D4
 #define SOLENOID_OPEN         0x1
 #define SOLENOID_CLOSED       0x0
 
-// Global variables for the flow sensor
+#define LEAK_RETRIES          5
+#define LEAK_CONFIDENCE       0.5
+#define LEAK_RESULT_COUNT     LEAK_CONFIDENCE * 10
+
+// Global variables for the water flow sensor
 volatile long pulse;
 float volume = 0;
 float lastTime = 0.0;
+
+// Global variables for the solenoid button
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 100;
+bool buttonState = HIGH;
+bool lastButtonState = HIGH;
 
 
 // =============================================================================
@@ -20,7 +32,7 @@ float lastTime = 0.0;
 // =============================================================================
 
 // Read the pressure sensor and convert it to psi
-float read_pressure() {
+float read_water_pressure() {
   float pressureVoltage = analogRead(pressureSensorPin) * 5.0 / 1023.0;
   float pressure = (pressureVoltage - pressureOffset) * (100.0 / (4.5 - baselinePressureVoltage));
   return pressure;
@@ -44,6 +56,84 @@ uint_8t get_solenoid_state() { return digitalRead(solenoidRelayPin); }
 // Set the solenoid state. 0x1 is open and 0x0 is closed
 void set_solenoid_state(uint_8t STATE) { digitalWrite(solenoidRelayPin, STATE); }
 
+bool scan_leak() {
+  if (read_water_pressure() == ) return false;
+
+  int bigLeakWaitTime = 10;       // TODO: get_big_leak_pref(); returns in seconds
+  int smallLeakWaitTime = 10;     // TODO: get_small_leak_pref(); returns in seconds
+
+  int big_leak_result[LEAK_RESULT_COUNT];
+  int small_leak_result[LEAK_RESULT_COUNT];
+
+  for (int i = 0; i < LEAK_RETRIES; i++) {
+
+    // Leak detection loop for big and small leaks
+    for (int j = 0; j < LEAK_RESULT_COUNT; j++) {
+
+      // First check for big leak
+      set_solenoid_state(SOLENOID_OPEN);
+
+      // Wait for changes in the water flow rate
+      for (int time = 0; time < bigLeakWaitTime * 1000; time++) {
+        if (read_waterflow_rate() > 0) {
+          big_leak_result[j] = 1;
+          break;
+        }
+      }
+
+      // Then check for small leak
+      set_solenoid_state(SOLENOID_CLOSED);
+      float initialRead = read_water_pressure();
+
+      // Wait for changes in the water pressure
+      for (int time = 0; time < smallLeakWaitTime * 1000; time++) {
+
+        // Cancel if there is an interruption by user
+        if (false) return false;    // TODO: if (get_interrupt()) return false;
+        if (read_water_pressure() < initialRead) {
+          big_leak_result[j] = 1;
+          break;
+        }
+      }
+    }
+
+    // Start checking for consistency and results
+    bool big_leak_consistent = true;
+    bool small_leak_consistent = false;
+
+    // Check for big leak consistency and result
+    for (check1 = 0; check1 < LEAK_RESULT_COUNT - 1; check1++) {
+      if (big_leak_result[check1] != big_leak_result[check1 + 1]) {
+        big_leak_consistent = false;
+        break;
+      }
+    }
+
+    if (big_leak_consistent) {
+      if (big_leak_result[0] == 1) {
+        // TODO: set_leak_detected(1);
+        return true;
+      }
+      // Otherwise, continue to check for small leak or retry due to inconsistency
+    }
+
+    // Check for small leak consistency and result
+    for (check2 = 0; check2 < LEAK_RESULT_COUNT - 1; check2++) {
+      if (small_leak_result[check2] != small_leak_result[check2 + 1]) {
+        small_leak_consistent = false;
+        break;
+      }
+    }
+    if (small_leak_consistent) {
+      if (small_leak_result[0] == 1) {
+        // TODO: set_leak_detected(2);
+        return true;
+      }
+      // Otherwise, retry due to inconsistency
+    }
+  }
+}
+
 
 // =============================================================================
 // ============================= DEVICE FUNCTIONS ==============================
@@ -51,8 +141,21 @@ void set_solenoid_state(uint_8t STATE) { digitalWrite(solenoidRelayPin, STATE); 
 
 // Once the solenoid button is pressed, the solenoid state will be toggled
 void switch_solendoid_state() {
-  if (get_solenoid_state() == SOLENOID_OPEN) { set_solenoid_state(SOLENOID_CLOSED); }
-  else { set_solenoid_state(SOLENOID_OPEN); }
+  if (get_solenoid_state() == SOLENOID_OPEN) set_solenoid_state(SOLENOID_CLOSED);
+  else set_solenoid_state(SOLENOID_OPEN);
+}
+
+// Check solenoid button press, toggle if pressed
+void get_solenoid_button_press() {
+  int reading = digitalRead(solenoidButtonPin);
+
+  if (reading != lastButtonState) lastDebounceTime = millis();
+  if ((millis() - lastDebounceTime) > debounceDelay && reading != buttonState) {
+    buttonState = reading;
+    if (buttonState == HIGH) switch_solendoid_state();
+  }
+
+  lastButtonState = reading;
 }
 
 // Update the volume of the water every loop
@@ -73,8 +176,9 @@ void setup() {
   // Initialize the pins
   pinMode(flowSensorPin, INPUT);
   pinMode(solenoidRelayPin, OUTPUT);
+  pinMode(solenoidButtonPin, INPUT_PULLUP);
 
-  // FIXME: Start the solenoid with solenoid state in the database
+  // TODO: Start the solenoid with get_valve_flag();
   digitalWrite(solenoidRelayPin, LOW);
 
   // Attach the interrupt to the flow sensor
@@ -92,9 +196,29 @@ void loop() {
   Serial.println(" mL/s");
 
   Serial.print("Pressure: ");
-  Serial.print(read_pressure());
+  Serial.print(read_water_pressure());
   Serial.println(" psi");
 
+  // Check if the valve should be opened or closed
+  // No toggle if the valve is already in the desired state
+  bool valveFlag = false;     // TODO: get_valve_flag();
+  bool isValveOpened = get_solenoid_state() == SOLENOID_OPEN ? true : false;
+  if (isValveOpened != valveFlag) switch_solendoid_state();
+
+  // Check if leak detec should start
+  bool detectLeakFlag = false;   // TODO: get_detect_leak_flag();
+  if (detectLeakFlag) {
+    if (scan_leak()) Serial.println("Leak Detected");
+    else Serial.println("No Leak Detected");
+  }
+
+  // Check if the solenoid button is pressed
+  get_solenoid_button_press();
+
+  // Update the volume of the water
+  update_volume();
+
+  // TODO: Remove the delay once done with testing
   delay(5000);
 }
 
