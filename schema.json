@@ -1,13 +1,21 @@
 {
+    // List of users
     "users": {
         "{userid1}": {
             "name": "John Doe",
             "email": "johndoe@email.com",
             "serial": "H2O-1234"
+        },
+        "{userid2}": {
+            "name": "John Doe",
+            "email": "johndoe@email.com",
+            "serial": "H2O-1234"
         }
     },
+    // List of devices
     "devices": {
         "{serial1}": {
+            // device details
             "details": {
                 "serial": "H2O-1234",
                 "model": "Basic",
@@ -16,6 +24,7 @@
                     "longitude": "-122.4194"
                 }
             },
+            // settings under the device
             "preference": {
                 "preference1": "false",
                 "preference2": "false",
@@ -27,6 +36,7 @@
                     }
                 }
             },
+            // flags used for communication
             "flags": {
                 "valve": "false",
                 "big_leak": "false",
@@ -34,9 +44,10 @@
                 "big_leak_detected": "false",
                 "small_leak_detected": "false"
             },
+            // data
             "data": {
                 "water_flow": {
-                    "timestamp" : "value",
+                    "timestamp": "value",
                     "1716132349": 0.5,
                     "1716132350": 0.6,
                     "1716132351": 0.7
