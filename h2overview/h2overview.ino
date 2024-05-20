@@ -1,7 +1,8 @@
-
 #include "physical.h"
+#include "server.h"
 
-Physical p;
+Physical hardware;
+FirebaseServer firebase;
 
 #define SOLENOID_OPEN 0x1
 #define SOLENOID_CLOSED 0x0
@@ -10,24 +11,13 @@ Physical p;
 #define LEAK_CONFIDENCE 0.5
 #define LEAK_RESULT_COUNT LEAK_CONFIDENCE * 10
 
-// Global variables for the water flow sensor
-volatile long pulse;
-float volume = 0;
-float lastTime = 0.0;
-
-// Global variables for the solenoid button
-unsigned long lastDebounceTime = 0;
-unsigned long debounceDelay = 100;
-bool buttonState = HIGH;
-bool lastButtonState = HIGH;
-
 // =============================================================================
 // ============================== PHYSICAL LAYER ===============================
 // =============================================================================
 
 // Scan for leaks in the system
 bool scan_leak() {
-  if (p.read_water_pressure() ==)
+  if (hardware.read_water_pressure() < 0) // TODO: get baseline pressure
     return false;
 
   int bigLeakWaitTime = 10;    // TODO: get_big_leak_pref(); returns in seconds
@@ -41,26 +31,26 @@ bool scan_leak() {
     // Leak detection loop for big and small leaks
     for (int j = 0; j < LEAK_RESULT_COUNT; j++) {
       // First check for big leak
-      p.set_solenoid_state(SOLENOID_OPEN);
+      hardware.set_solenoid_state(SOLENOID_OPEN);
 
       // Wait for changes in the water flow rate
       for (int time = 0; time < bigLeakWaitTime * 1000; time++) {
-        if (p.read_waterflow_rate() > 0) {
+        if (hardware.read_waterflow_rate() > 0) {
           big_leak_result[j] = 1;
           break;
         }
       }
 
       // Then check for small leak
-      p.set_solenoid_state(SOLENOID_CLOSED);
-      float initialRead = p.read_water_pressure();
+      hardware.set_solenoid_state(SOLENOID_CLOSED);
+      float initialRead = hardware.read_water_pressure();
 
       // Wait for changes in the water pressure
       for (int time = 0; time < smallLeakWaitTime * 1000; time++) {
         // Cancel if there is an interruption by user
         if (false)
           return false;  // TODO: if (get_interrupt()) return false;
-        if (p.read_water_pressure() < initialRead) {
+        if (hardware.read_water_pressure() < initialRead) {
           big_leak_result[j] = 1;
           break;
         }
@@ -111,31 +101,31 @@ bool scan_leak() {
   return false;
 }
 
-// =============================================================================
-// ============================= DEVICE FUNCTIONS ==============================
-// =============================================================================
+void valve_control() {
+  // Get the valve state from the firebase
+  bool valveFlag = firebase.get_valve_state();
 
-// Once the solenoid button is pressed, the solenoid state will be toggled
-void switch_solendoid_state() {
-  if (p.get_solenoid_state() == SOLENOID_OPEN)
-    p.set_solenoid_state(SOLENOID_CLOSED);
-  else
-    p.set_solenoid_state(SOLENOID_OPEN);
-}
-
-// Check solenoid button press, toggle if pressed
-void get_solenoid_button_press() {
-  int reading = digitalRead(solenoidButtonPin);
-
-  if (reading != lastButtonState)
-    lastDebounceTime = millis();
-  if ((millis() - lastDebounceTime) > debounceDelay && reading != buttonState) {
-    buttonState = reading;
-    if (buttonState == HIGH)
-      switch_solendoid_state();
+  // Toggle the valve state if the button is pressed
+  if (hardware.get_solenoid_button_press()) {
+    firebase.set_valve_state(!valveFlag);
+    valveFlag = !valveFlag;
   }
 
-  lastButtonState = reading;
+  // Set the valve state if the flag is different from the current state
+  bool valveState = hardware.get_solenoid_state();
+  if (valveFlag != valveState) {
+    hardware.set_solenoid_state(valveFlag);
+  }
+}
+
+void print_logs() {
+  Serial.print("Flow Rate: ");
+  Serial.print(hardware.read_waterflow_rate());
+  Serial.println(" mL/s");
+
+  Serial.print("Pressure: ");
+  Serial.print(hardware.read_water_pressure());
+  Serial.println(" psi");
 }
 
 // =============================================================================
@@ -143,59 +133,18 @@ void get_solenoid_button_press() {
 // =============================================================================
 
 void setup() {
-  // Initialize the serial communication
   Serial.begin(9600);
-
-  // Initialize the pins
-  physical.initialize_pins();
+  hardware.initialize_pins();
 }
 
 void loop() {
-  Serial.print("Volume: ");
-  Serial.print(read_water_volume());
-  Serial.println(" mL");
+  print_logs();
+  valve_control();
 
-  Serial.print("Flow Rate: ");
-  Serial.print(p.read_waterflow_rate());
-  Serial.println(" mL/s");
-
-  Serial.print("Pressure: ");
-  Serial.print(p.read_water_pressure());
-  Serial.println(" psi");
-
-  // Check if the valve should be opened or closed
-  // No toggle if the valve is already in the desired state
-  bool valveFlag = false;  // TODO: get_valve_flag();
-  bool isValveOpened = p.get_solenoid_state() == SOLENOID_OPEN ? true : false;
-  if (isValveOpened != valveFlag)
-    switch_solendoid_state();
-
-  // Check if leak detec should start
-  bool detectLeakFlag = false;  // TODO: get_detect_leak_flag();
-  if (detectLeakFlag) {
-    if (scan_leak())
-      Serial.println("Leak Detected");
-    else
-      Serial.println("No Leak Detected");
+  if (firebase.is_leak_scanning()) {
+    scan_leak();
   }
-
-  // Check if the solenoid button is pressed
-  get_solenoid_button_press();
 
   // TODO: Remove the delay once done with testing
   delay(5000);
-}
-
-#include "physical.h"
-
-void setup() {
-  // Initialize the serial communication
-  Serial.begin(9600);
-
-  // Initialize the pins
-  p.initialize_pins();
-}
-
-void loop() {
-  Serial.print("Hello");
 }

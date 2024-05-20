@@ -25,8 +25,9 @@ int Physical::get_solenoid_state() {
 int Physical::get_solenoid_button_press() {
   int reading = digitalRead(SOLENOID_BUTTON_PIN);
 
-  if (reading != lastButtonState)
+  if (reading != lastButtonState) {
     lastDebounceTime = millis();
+  }
 
   if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
     if (reading != buttonState) {
