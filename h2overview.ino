@@ -5,7 +5,6 @@
 #define flowSensorPin         D2
 #define flowCalibrationFactor 4.5 // TODO: Calibrate this value
 
-
 #define solenoidButtonPin     D3
 #define solenoidRelayPin      D4
 #define SOLENOID_OPEN         0x1
@@ -56,6 +55,7 @@ uint_8t get_solenoid_state() { return digitalRead(solenoidRelayPin); }
 // Set the solenoid state. 0x1 is open and 0x0 is closed
 void set_solenoid_state(uint_8t STATE) { digitalWrite(solenoidRelayPin, STATE); }
 
+// Scan for leaks in the system
 bool scan_leak() {
   if (read_water_pressure() == ) return false;
 
@@ -65,6 +65,7 @@ bool scan_leak() {
   int big_leak_result[LEAK_RESULT_COUNT];
   int small_leak_result[LEAK_RESULT_COUNT];
 
+  // Retry loop if the big leak or small leak results are inconsistent
   for (int i = 0; i < LEAK_RETRIES; i++) {
 
     // Leak detection loop for big and small leaks
@@ -99,7 +100,7 @@ bool scan_leak() {
 
     // Start checking for consistency and results
     bool big_leak_consistent = true;
-    bool small_leak_consistent = false;
+    bool small_leak_consistent = true;
 
     // Check for big leak consistency and result
     for (check1 = 0; check1 < LEAK_RESULT_COUNT - 1; check1++) {
@@ -129,9 +130,17 @@ bool scan_leak() {
         // TODO: set_leak_detected(2);
         return true;
       }
+      else {
+        // TODO: set_leak_detected(0);
+        return false;
+      }
       // Otherwise, retry due to inconsistency
     }
   }
+
+  // Out of retries, failed to detect leak
+  // Assumed no leak detected
+  return false;
 }
 
 
