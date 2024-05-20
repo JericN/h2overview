@@ -1,12 +1,12 @@
-#include <WiFi.h>
 #include <PubSubClient.h>
 
-#define MYLED 2
-#define BUTTON 4
+#include <ESP8266WiFi.h>  // For D1 R1
+// #include <WiFi.h>   // For ESP32
+#define MYLED D6  // For D1 R1
+// #define MYLED 2   // For ESP32
+#define BUTTON D5 // For D1 R1
+// #define BUTTON 5
 #define SENSOR A0
-
-#define STASSID "dcs-students2"
-#define STAPSK "W1F14students"
 
 char morseCode[500];
 char message[500];
@@ -18,8 +18,8 @@ char message[500];
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-const char *ssid =  "..";
-const char *password = "qqwweerr11";
+const char *ssid = "dcs-students2";
+const char *password = "W1F14students";
 const char *mqtt_server = "broker.mqtt-dashboard.com";
 
 void setup_wifi() {
@@ -99,10 +99,8 @@ static const MorseCodeMap morse_map[] = {
 
 // Function to convert Morse code to character
 const char morse_to_char(const char *morse) {
-  for (int i = 0; morse_map[i].morse != NULL; i++) {
-    if (strcmp(morse, morse_map[i].morse) == 0) {
-      return morse_map[i].character;
-    }
+  for (int i = 0; i < 36 && morse_map[i].morse != NULL; i++) {
+    if (strcmp(morse, morse_map[i].morse) == 0) return morse_map[i].character;
   }
   return ' ';
 }
@@ -122,8 +120,12 @@ void convert_morse_to_message() {
   char *token = strtok(morseCode, " ");
   char *ptr = message;
 
+  // while (token != NULL) {
   while (token != NULL) {
-    *ptr++ = morse_to_char(token);
+    int mtc = morse_to_char(token);
+    if (mtc == ' ') break;
+
+    *ptr++ = mtc;
     token = strtok(NULL, " ");
   }
 
@@ -162,7 +164,12 @@ void add_letter_padding() {
 // =============================================================================
 
 // Send message to the other team using MQTT
-void mqtt_send(char *topic, char *msg) { client.publish(topic, msg); }
+void mqtt_send(char *topic, char *msg) { 
+  Serial.print("MQTT SEND: ");
+  Serial.println(msg);
+  client.publish(topic, msg); 
+  Serial.println("PUBLISHED");
+}
 
 // Light up the LED for a dot
 void led_dot() {
@@ -195,29 +202,34 @@ void led_dash() {
 // ============================= DECODER SECTION ================================
 // ==============================================================================
 
-void decode_message(byte *payload, unsigned int length) {
-  char topic[50];
+void decode_message(char *payload, unsigned int length) {
+  char topic[500];
+
   for (unsigned int i = 0; i < length; i++) {
-    // set the topic to "RAW_MORSE/<character>"
-    sprintf(topic, "cs145/<OPPOSITE TEAM>/RAW_MORSE/%c", (char)payload[i]);
+    // Initialize topic with the base string
+    strcpy(topic, "cs145/0x3/RAW_MORSE/");
+    char char_to_add[2] = {payload[i], '\0'};
+    strcat(topic, char_to_add);
 
     // convert the character to morse code
     const char *morse = char_to_morse((char)payload[i]);
 
     // light up the LED according to the morse code
     // and send the corresponding message
-    for (int i = 0; i < strlen(morse); i++) {
-      if (morse[i] == '.') {
+    for (int j = 0; j < strlen(morse); j++) {
+      if (morse[j] == '.') {
         led_dot();
         mqtt_send(topic, (char *)"DOT");
-      } else if (morse[i] == '-') {
+      } else if (morse[j] == '-') {
         led_dash();
         mqtt_send(topic, (char *)"DASH");
       }
     }
 
     // send the "..." after each character
-    sprintf(topic, "cs145/<OPPOSITE TEAM>/RAW_MORSE/%s", "dot");
+    // Initialize topic with the base string
+    strcpy(topic, "cs145/0x3/RAW_MORSE/");
+    strcat(topic, "dot");
     mqtt_send(topic, (char *)"...");
   }
 }
@@ -226,7 +238,7 @@ void decode_message(byte *payload, unsigned int length) {
 void shutdown() {
   // Flash the "END" message in Morse code.
   // FIXME: do we need padding between the letters E N D?
-  const char *END_MORSE = "...-.--.";
+  const char *END_MORSE = ".-.-..";
   for (int i = 0; i < strlen(END_MORSE); i++) {
     if (END_MORSE[i] == '.') led_dot();
     else led_dash();
@@ -234,21 +246,33 @@ void shutdown() {
 
   // Send "END" back and disconnect MQTT
   // FIXME: change to correct topic
-  mqtt_send((char *)"cs145/<OPPOSITE TEAM>/out", (char *)"END");
+  mqtt_send((char *)"cs145/0x3/out", (char *)"END");
   client.unsubscribe("cs145/0x7/out");
   client.disconnect();
   Serial.println("MQTT Terminated.");
 }
 
 void callback(char *topic, byte *payload, unsigned int length) {
+  char* payloadStr = (char*) malloc(length + 1);
+  if (payloadStr == NULL) {
+      Serial.println("Memory allocation failed!");
+      return;
+  }
+
+  memcpy(payloadStr, payload, length);
+  payloadStr[length] = '\0';
+
   Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("]");
+  Serial.print(payloadStr);
+  Serial.print("] ");
 
   // Execute shutdown if the message is "END"
   if (strcmp((char *)payload, "END") == 0) shutdown();
   // Otherwise, execute the decoding procedure
-  else decode_message(payload, length);
+  else decode_message((char *)payloadStr, length);
+
+  Serial.println("Decoding Done!");
+  delay(10000);
 }
 
 
@@ -326,7 +350,7 @@ void setup() {
   pinMode(BUTTON, INPUT_PULLUP);
 
   setup_wifi();
-  client.setServer(mqtt_server, 1884);
+  client.setServer(mqtt_server, 1883);
   // FIXME: verify if this is the correct topic
   client.subscribe("cs145/0x7/out");
   client.setCallback(callback);
@@ -354,7 +378,7 @@ void loop() {
 
     // send the message to the other team
     // FIXME: verify if this is the correct topic
-    mqtt_send((char *)"cs145/<OPPOSITE TEAM>/out", message);
+    mqtt_send((char *)"cs145/0x3/out", message);
 
     // clear the message and morse code
     morseCode[0] = '\0';
