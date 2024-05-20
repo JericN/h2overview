@@ -4,101 +4,96 @@
 Physical hardware;
 FirebaseServer firebase;
 
-#define SOLENOID_OPEN 0x1
-#define SOLENOID_CLOSED 0x0
+#define SOLENOID_OPEN 1
+#define SOLENOID_CLOSED 0
 
-#define LEAK_RETRIES 5
-#define LEAK_CONFIDENCE 0.5
-#define LEAK_RESULT_COUNT LEAK_CONFIDENCE * 10
+#define SCAN_RETRIES 5
+#define SCAN_COUNT 5
+#define BIG_LEAK_THRESHOLD 0.5
 
 // =============================================================================
 // ============================== PHYSICAL LAYER ===============================
 // =============================================================================
 
+// Function to check if all elements are the same
+bool areResultConsistent(int arr[SCAN_COUNT]) {
+  int firstElement = arr[0];
+  for (int i = 1; i < SCAN_COUNT; i++) {
+    if (arr[i] != firstElement) {
+      return false;
+    }
+  }
+  return true;
+}
+
+int big_leak_scan() {
+  int start = millis();
+  // TODO: get scan duration
+  while (millis() - start < 10000) {
+    float flow = hardware.read_waterflow_rate();
+    if (flow > BIG_LEAK_THRESHOLD) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+int small_leak_scan() {
+  float initialRead = hardware.read_water_pressure();
+  int start = millis();
+  // TODO: get scan duration
+  while (millis() - start < 30000) {
+    // TODO: if (get_interrupt()) return 0;
+  }
+  float finalRead = hardware.read_water_pressure();
+  return finalRead < initialRead;
+}
+
 // Scan for leaks in the system
+// FIXME: This function is untested
+// FIXME: This function is untested
+// FIXME: This function is untested
 bool scan_leak() {
-  if (hardware.read_water_pressure() < 0) // TODO: get baseline pressure
+  // TODO: get baseline pressure
+  if (hardware.read_water_pressure() < 0)
     return false;
 
-  int bigLeakWaitTime = 10;    // TODO: get_big_leak_pref(); returns in seconds
-  int smallLeakWaitTime = 10;  // TODO: get_small_leak_pref(); returns in seconds
-
-  int big_leak_result[LEAK_RESULT_COUNT];
-  int small_leak_result[LEAK_RESULT_COUNT];
+  int big_leak_result[SCAN_COUNT];
+  int small_leak_result[SCAN_COUNT];
 
   // Retry loop if the big leak or small leak results are inconsistent
-  for (int i = 0; i < LEAK_RETRIES; i++) {
-    // Leak detection loop for big and small leaks
-    for (int j = 0; j < LEAK_RESULT_COUNT; j++) {
-      // First check for big leak
+  for (int i = 0; i < SCAN_RETRIES; i++) {
+    // Scan for big and small leaks
+    for (int j = 0; j < SCAN_COUNT; j++) {
       hardware.set_solenoid_state(SOLENOID_OPEN);
-
-      // Wait for changes in the water flow rate
-      for (int time = 0; time < bigLeakWaitTime * 1000; time++) {
-        if (hardware.read_waterflow_rate() > 0) {
-          big_leak_result[j] = 1;
-          break;
-        }
-      }
-
-      // Then check for small leak
+      big_leak_result[j] = big_leak_scan();
       hardware.set_solenoid_state(SOLENOID_CLOSED);
-      float initialRead = hardware.read_water_pressure();
-
-      // Wait for changes in the water pressure
-      for (int time = 0; time < smallLeakWaitTime * 1000; time++) {
-        // Cancel if there is an interruption by user
-        if (false)
-          return false;  // TODO: if (get_interrupt()) return false;
-        if (hardware.read_water_pressure() < initialRead) {
-          big_leak_result[j] = 1;
-          break;
-        }
-      }
+      small_leak_result[j] = small_leak_scan();
     }
 
-    // Start checking for consistency and results
-    bool big_leak_consistent = true;
-    bool small_leak_consistent = true;
+    // Check if the results are consistent
+    bool big_leak_consistent = areResultConsistent(big_leak_result);
+    bool small_leak_consistent = areResultConsistent(small_leak_result);
 
-    // Check for big leak consistency and result
-    for (check1 = 0; check1 < LEAK_RESULT_COUNT - 1; check1++) {
-      if (big_leak_result[check1] != big_leak_result[check1 + 1]) {
-        big_leak_consistent = false;
-        break;
-      }
-    }
+    // Analyze the results
+    if (big_leak_consistent && small_leak_consistent) {
+      int big_leak = big_leak_result[0];
+      int small_leak = small_leak_result[0];
 
-    if (big_leak_consistent) {
-      if (big_leak_result[0] == 1) {
-        // TODO: set_leak_detected(1);
-        return true;
+      if (big_leak == 1 && small_leak == 1) {
+        return 2;  // big leak
+      } else if (big_leak == 0 && small_leak == 1) {
+        return 1;  // small leak
+      } else if (big_leak == 0 && small_leak == 0) {
+        return 0;  // no leak
+      } else if (big_leak == 1 && small_leak == 0) {
+        continue;  // this is not possible, retry
       }
-      // Otherwise, continue to check for small leak or retry due to inconsistency
-    }
-
-    // Check for small leak consistency and result
-    for (check2 = 0; check2 < LEAK_RESULT_COUNT - 1; check2++) {
-      if (small_leak_result[check2] != small_leak_result[check2 + 1]) {
-        small_leak_consistent = false;
-        break;
-      }
-    }
-    if (small_leak_consistent) {
-      if (small_leak_result[0] == 1) {
-        // TODO: set_leak_detected(2);
-        return true;
-      } else {
-        // TODO: set_leak_detected(0);
-        return false;
-      }
-      // Otherwise, retry due to inconsistency
     }
   }
 
-  // Out of retries, failed to detect leak
-  // Assumed no leak detected
-  return false;
+  // If the results are still inconsistent after retries
+  return 3;
 }
 
 void valve_control() {
