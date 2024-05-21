@@ -10,7 +10,7 @@
 #define REFERENCE_URL "https://h2overview-iot-default-rtdb.asia-southeast1.firebasedatabase.app/"
 
 // Device serial number
-#define DEVICE_SERIAL "device_serial"
+#define DEVICE_SERIAL "H2O-1234"
 
 #define SUCCESS 200
 #define FAILURE 400

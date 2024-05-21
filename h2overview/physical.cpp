@@ -14,10 +14,11 @@ void Physical::pulse_counter() {
 
 // Initialize pins
 void Physical::initialize_pins() {
-  pinMode(FLOW_SENSOR_PIN, INPUT);
+  // pinMode(FLOW_SENSOR_PIN, INPUT);
   pinMode(SOLENOID_RELAY_PIN, OUTPUT);
   pinMode(SOLENOID_BUTTON_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), Physical::pulse_counter, RISING);
+  pinMode(LED_1, OUTPUT);
+  // attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), Physical::pulse_counter, RISING);
 }
 
 // Get the state of the solenoid
@@ -49,6 +50,10 @@ int Physical::get_solenoid_button_press() {
 // Set the state of the solenoid
 void Physical::set_solenoid_state(int state) {
   digitalWrite(SOLENOID_RELAY_PIN, state);
+}
+
+void Physical::set_led_state(int state) {
+  digitalWrite(LED_1, state);
 }
 
 // Read the water flow rate

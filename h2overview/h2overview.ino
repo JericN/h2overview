@@ -133,7 +133,10 @@ void valve_control() {
   Serial.println(valveFlag);
 
   // Toggle the valve state if the button is pressed
-  if (hardware.get_solenoid_button_press()) {
+  int buttonPress = hardware.get_solenoid_button_press();
+  Serial.print("Button Valve State:");
+  Serial.println(buttonPress);
+  if (buttonPress) {
     firebase.set_valve_state(!valveFlag);
     valveFlag = !valveFlag;
   }
@@ -146,6 +149,8 @@ void valve_control() {
     hardware.set_solenoid_state(valveFlag);
     Serial.println("FLIPPED");
   }
+
+  hardware.set_led_state(valveFlag);
 }
 
 void print_logs() {
@@ -163,14 +168,23 @@ void print_logs() {
 // =============================================================================
 
 void setup() {
-  Serial.begin(19200);
+  Serial.begin(9600);
   delay(5000);
 
+  Serial.println("hard start");
   hardware.initialize_pins();
+  Serial.println("hard end");
   setup_wifi();
 }
 
 void loop() {
+  // Serial.println("close");
+  // hardware.set_solenoid_state(1);
+  // delay(5000);
+  // Serial.println("open");
+  // hardware.set_solenoid_state(0);
+  // delay(5000);
+
   // print_logs();
   valve_control();
 
@@ -180,5 +194,5 @@ void loop() {
   // }
 
   // TODO: Remove the delay once done with testing
-  delay(5000);
+  // delay(5000);
 }
