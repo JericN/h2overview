@@ -186,7 +186,9 @@ void loop() {
   // delay(5000);
 
   // print_logs();
-  valve_control();
+  // valve_control();
+  int pressure = hardware.read_water_pressure();
+  Serial.println(pressure);
 
   // if (firebase.is_leak_scanning()) {
   //   int res = scan_leak();

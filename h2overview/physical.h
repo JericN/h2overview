@@ -2,7 +2,7 @@
 #define PHYSICAL_H
 
 // #define PRESSURE_SENSOR_PIN A0
-#define PRESSURE_SENSOR_PIN 3
+#define PRESSURE_SENSOR_PIN 15
 // #define FLOW_SENSOR_PIN D4
 #define FLOW_SENSOR_PIN 8
 // #define SOLENOID_BUTTON_PIN D3
@@ -40,8 +40,8 @@ class Physical {
   const unsigned long DEBOUNCE_DELAY = 50;
 
   // Calibration constants
-  const float PRESSURE_OFFSET = 0;
-  const float BASELINE_PRESSURE_VOLTAGE = 0;
+  const float PRESSURE_OFFSET = 0.483;
+  const float BASELINE_PRESSURE_VOLTAGE = 0.45;
 };
 
 #endif

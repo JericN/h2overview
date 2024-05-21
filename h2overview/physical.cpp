@@ -65,7 +65,9 @@ float Physical::read_waterflow_rate() {
 
 // Read the water pressure
 float Physical::read_water_pressure() {
-  float voltage = analogRead(PRESSURE_SENSOR_PIN) * 5.0 / 1023.0;
-  float pressure = (voltage - PRESSURE_OFFSET) * (100.0 / (4.5 - BASELINE_PRESSURE_VOLTAGE));
+  float voltage = analogRead(PRESSURE_SENSOR_PIN);
+  Serial.print("Voltage: ");
+  Serial.println(voltage);
+  float pressure = ((voltage * 5.0 / 1023.0) - 0.483) * (100.0 / (3 - 0.45));
   return pressure;
 }
