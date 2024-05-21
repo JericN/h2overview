@@ -3,7 +3,8 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <ESP8266Firebase.h>
+// #include <ESP8266Firebase.h>
+#include <ESP32Firebase.h>
 
 // Firebase endpoint
 #define REFERENCE_URL "https://h2overview-iot-default-rtdb.asia-southeast1.firebasedatabase.app/"

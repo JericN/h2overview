@@ -1,15 +1,45 @@
 #include "physical.h"
 #include "server.h"
 
+// #include <ESP8266WiFi.h>  // For D1 R1
+#include <WiFi.h>   // For ESP32
+
 Physical hardware;
 FirebaseServer firebase;
 
-#define SOLENOID_OPEN 1
-#define SOLENOID_CLOSED 0
+#define SOLENOID_OPEN 0
+#define SOLENOID_CLOSED 1
 
 #define SCAN_RETRIES 5
 #define SCAN_COUNT 5
 #define BIG_LEAK_THRESHOLD 0.5
+
+WiFiClient espClient;
+const char *ssid = "dcs-students2";
+const char *password = "W1F14students";
+
+
+void setup_wifi() {
+  delay(10);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  randomSeed(micros());
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
 
 // =============================================================================
 // ============================== PHYSICAL LAYER ===============================
@@ -99,6 +129,8 @@ bool scan_leak() {
 void valve_control() {
   // Get the valve state from the firebase
   bool valveFlag = firebase.get_valve_state();
+  Serial.print("Firebase Valve State:");
+  Serial.println(valveFlag);
 
   // Toggle the valve state if the button is pressed
   if (hardware.get_solenoid_button_press()) {
@@ -108,8 +140,11 @@ void valve_control() {
 
   // Set the valve state if the flag is different from the current state
   bool valveState = hardware.get_solenoid_state();
+  Serial.print("Valve State:");
+  Serial.println(valveState);
   if (valveFlag != valveState) {
     hardware.set_solenoid_state(valveFlag);
+    Serial.println("FLIPPED");
   }
 }
 
@@ -128,17 +163,21 @@ void print_logs() {
 // =============================================================================
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(19200);
+  delay(5000);
+
   hardware.initialize_pins();
+  setup_wifi();
 }
 
 void loop() {
-  print_logs();
+  // print_logs();
   valve_control();
 
-  if (firebase.is_leak_scanning()) {
-    scan_leak();
-  }
+  // if (firebase.is_leak_scanning()) {
+  //   int res = scan_leak();
+  //   firebase.set_leak_detected(res);
+  // }
 
   // TODO: Remove the delay once done with testing
   delay(5000);
