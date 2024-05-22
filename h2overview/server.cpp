@@ -36,7 +36,7 @@ LeakPref FirebaseServer::get_small_leak_preference() {
 // =================================================================
 
 bool FirebaseServer::get_valve_state() {
-  return firebase.getInt(flag_path + "/valve_state");
+  return firebase.getInt("devices/H2O-1234/flags/valve_state");
 }
 
 bool FirebaseServer::is_leak_scanning() {
