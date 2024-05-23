@@ -47,21 +47,21 @@ bool FirebaseServer::is_leak_detected() {
   return firebase.getInt(flag_path + "/leak_detected");
 }
 
-void FirebaseServer::set_valve_state(bool state) {
+void FirebaseServer::set_valve_state(int state) {
   int res = firebase.setInt(flag_path + "/valve_state", state);
   if (res == FAILURE) {
     Serial.println("[ERROR] Firebase: Failed to set valve_state flag");
   }
 }
 
-void FirebaseServer::set_leak_scanning(bool state) {
+void FirebaseServer::set_leak_scanning(int state) {
   int res = firebase.setInt(flag_path + "/leak_scanning", state);
   if (res == FAILURE) {
     Serial.println("[ERROR] Firebase: Failed to set leak_scanning flag");
   }
 }
 
-void FirebaseServer::set_leak_detected(bool state) {
+void FirebaseServer::set_leak_detected(int state) {
   int res = firebase.setInt(flag_path + "/leak_detected", state);
   if (res == FAILURE) {
     Serial.println("[ERROR] Firebase: Failed to set leak_detected flag");

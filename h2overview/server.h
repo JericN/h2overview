@@ -38,9 +38,9 @@ class FirebaseServer {
   bool get_valve_state();
   bool is_leak_scanning();
   bool is_leak_detected();
-  void set_valve_state(bool state);
-  void set_leak_scanning(bool state);
-  void set_leak_detected(bool state);
+  void set_valve_state(int state);
+  void set_leak_scanning(int state);
+  void set_leak_detected(int state);
 
   // Data
   void send_waterflow(Waterflow data);
