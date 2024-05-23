@@ -23,6 +23,7 @@ class Physical {
   void set_solenoid_state(int state);
   void set_led_state(int state);
   float read_waterflow_rate();
+  float read_waterflow_rate_timed(int time);
   float read_water_pressure();
 
  private:

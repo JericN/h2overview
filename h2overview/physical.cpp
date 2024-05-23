@@ -63,6 +63,13 @@ float Physical::read_waterflow_rate() {
   return 2.663 * Physical::PULSE;
 }
 
+// Read the water flow rate
+float Physical::read_waterflow_rate_timed(int time) {
+  Physical::PULSE = 0;
+  delay(time);
+  return 2.663 * Physical::PULSE;
+}
+
 // Read the water pressure
 float Physical::read_water_pressure() {
   float V = analogRead(PRESSURE_SENSOR_PIN) * 5.00 / 1023;
