@@ -2,15 +2,14 @@
 #define PHYSICAL_H
 
 // #define PRESSURE_SENSOR_PIN A0
-#define PRESSURE_SENSOR_PIN 15
+#define PRESSURE_SENSOR_PIN A0
 // #define FLOW_SENSOR_PIN D4
-#define FLOW_SENSOR_PIN 8
+#define FLOW_SENSOR_PIN D4
 // #define SOLENOID_BUTTON_PIN D3
-#define SOLENOID_BUTTON_PIN 5
+#define SOLENOID_BUTTON_PIN D6
 // #define SOLENOID_RELAY_PIN D2
-#define SOLENOID_RELAY_PIN 4
-
-#define LED_1 21
+#define SOLENOID_RELAY_PIN D5
+#define LED_1 D7
 
 #include <Arduino.h>
 
@@ -27,9 +26,9 @@ class Physical {
   float read_water_pressure();
 
  private:
-  // Interrupt handler
-  static void pulse_counter();
-
+  // interrupt handler
+  static void IRAM_ATTR pulse_counter();
+ 
   // Global variable
   static unsigned long PULSE;
 

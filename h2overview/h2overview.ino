@@ -1,8 +1,8 @@
 #include "physical.h"
 #include "server.h"
 
-// #include <ESP8266WiFi.h>  // For D1 R1
-#include <WiFi.h>   // For ESP32
+#include <ESP8266WiFi.h>  // For D1 R1
+// #include <WiFi.h>   // For ESP32
 
 Physical hardware;
 FirebaseServer firebase;
@@ -174,7 +174,7 @@ void setup() {
   Serial.println("hard start");
   hardware.initialize_pins();
   Serial.println("hard end");
-  setup_wifi();
+  // setup_wifi();
 }
 
 void loop() {
@@ -188,7 +188,12 @@ void loop() {
   // print_logs();
   // valve_control();
   int pressure = hardware.read_water_pressure();
+  Serial.print("Pressure reading: ");
   Serial.println(pressure);
+
+  int flowrate = hardware.read_waterflow_rate();
+  Serial.print("Flow rate reading: ");
+  Serial.println(flowrate);
 
   // if (firebase.is_leak_scanning()) {
   //   int res = scan_leak();

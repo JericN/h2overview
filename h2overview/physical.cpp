@@ -8,17 +8,17 @@ Physical::Physical() {
 }
 
 // Interrupt handler
-void Physical::pulse_counter() {
+void IRAM_ATTR Physical::pulse_counter() {
   Physical::PULSE++;
 }
 
 // Initialize pins
 void Physical::initialize_pins() {
-  // pinMode(FLOW_SENSOR_PIN, INPUT);
+  pinMode(FLOW_SENSOR_PIN, INPUT);
   pinMode(SOLENOID_RELAY_PIN, OUTPUT);
   pinMode(SOLENOID_BUTTON_PIN, INPUT_PULLUP);
   pinMode(LED_1, OUTPUT);
-  // attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), Physical::pulse_counter, RISING);
+  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), Physical::pulse_counter, RISING);
 }
 
 // Get the state of the solenoid
@@ -65,9 +65,8 @@ float Physical::read_waterflow_rate() {
 
 // Read the water pressure
 float Physical::read_water_pressure() {
-  float voltage = analogRead(PRESSURE_SENSOR_PIN);
-  Serial.print("Voltage: ");
-  Serial.println(voltage);
-  float pressure = ((voltage * 5.0 / 1023.0) - 0.483) * (100.0 / (3 - 0.45));
-  return pressure;
+  float V = analogRead(PRESSURE_SENSOR_PIN) * 5.00 / 1023;
+  // FIXME: calibrate pressure
+  float P = (V - 0.83) * 400;
+  return P;
 }
