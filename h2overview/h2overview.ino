@@ -59,8 +59,10 @@ bool areResultConsistent(int arr[SCAN_COUNT]) {
 int big_leak_scan() {
   int start = millis();
   // TODO: get scan duration
-  while (millis() - start < 10000) {
+  while (millis() - start < 5000) {
     float flow = hardware.read_waterflow_rate();
+    Serial.print("Flow rate: ");
+    Serial.println(flow);
     if (flow > BIG_LEAK_THRESHOLD) {
       return 1;
     }
@@ -83,43 +85,86 @@ int small_leak_scan() {
 // FIXME: This function is untested
 // FIXME: This function is untested
 // FIXME: This function is untested
-bool scan_leak() {
+int scan_leak() {
   // TODO: get baseline pressure
-  if (hardware.read_water_pressure() < 0)
-    return false;
+  // FIXME: replace correct calibration
+  int pressure = hardware.read_water_pressure();
+  Serial.print("Pressure reading: ");
+  Serial.println(pressure);
+  if (pressure < 0){
+    Serial.println("No water pressure detected");
+    return 3;
+  }
+
+  Serial.println("Scanning for leaks...");
 
   int big_leak_result[SCAN_COUNT];
   int small_leak_result[SCAN_COUNT];
 
   // Retry loop if the big leak or small leak results are inconsistent
   for (int i = 0; i < SCAN_RETRIES; i++) {
+    Serial.print("Retry: ");
+    Serial.println(i);
+
     // Scan for big and small leaks
     for (int j = 0; j < SCAN_COUNT; j++) {
+      Serial.print("Scan: ");
+      Serial.println(j);
+      
       hardware.set_solenoid_state(SOLENOID_OPEN);
       big_leak_result[j] = big_leak_scan();
+      Serial.print("Big leak scan done: ");
+      Serial.println(big_leak_result[j]);
+
+      delay(2000);
       hardware.set_solenoid_state(SOLENOID_CLOSED);
-      small_leak_result[j] = small_leak_scan();
+      delay(2000);
+
+      // small_leak_result[j] = small_leak_scan();
+      // Serial.println("Small leak scan done");
+      // Serial.println(small_leak_result[j]);
     }
+
+    Serial.println("Done scanning for leaks...");
 
     // Check if the results are consistent
+    // print big leak values
+    for (int j = 0; j < SCAN_COUNT; j++) {
+      Serial.print(big_leak_result[j]);
+      Serial.print(" ");
+    }
+    Serial.println();
+
     bool big_leak_consistent = areResultConsistent(big_leak_result);
-    bool small_leak_consistent = areResultConsistent(small_leak_result);
+    Serial.print("Big leak consistent: ");
+    Serial.println(big_leak_consistent);
 
-    // Analyze the results
-    if (big_leak_consistent && small_leak_consistent) {
+    if (big_leak_consistent) {
       int big_leak = big_leak_result[0];
-      int small_leak = small_leak_result[0];
-
-      if (big_leak == 1 && small_leak == 1) {
+      if (big_leak == 1) {
         return 2;  // big leak
-      } else if (big_leak == 0 && small_leak == 1) {
-        return 1;  // small leak
-      } else if (big_leak == 0 && small_leak == 0) {
+      } else if (big_leak == 0) {
         return 0;  // no leak
-      } else if (big_leak == 1 && small_leak == 0) {
-        continue;  // this is not possible, retry
       }
     }
+
+    // bool small_leak_consistent = areResultConsistent(small_leak_result);
+
+    // // Analyze the results
+    // if (big_leak_consistent && small_leak_consistent) {
+    //   int big_leak = big_leak_result[0];
+    //   int small_leak = small_leak_result[0];
+
+    //   if (big_leak == 1 && small_leak == 1) {
+    //     return 2;  // big leak
+    //   } else if (big_leak == 0 && small_leak == 1) {
+    //     return 1;  // small leak
+    //   } else if (big_leak == 0 && small_leak == 0) {
+    //     return 0;  // no leak
+    //   } else if (big_leak == 1 && small_leak == 0) {
+    //     continue;  // this is not possible, retry
+    //   }
+    // }
   }
 
   // If the results are still inconsistent after retries
@@ -174,7 +219,7 @@ void setup() {
   Serial.println("hard start");
   hardware.initialize_pins();
   Serial.println("hard end");
-  // setup_wifi();
+  setup_wifi();
 }
 
 void loop() {
@@ -187,18 +232,26 @@ void loop() {
 
   // print_logs();
   // valve_control();
-  int pressure = hardware.read_water_pressure();
-  Serial.print("Pressure reading: ");
-  Serial.println(pressure);
+  // int pressure = hardware.read_water_pressure();
+  // Serial.print("Pressure reading: ");
+  // Serial.println(pressure);
 
-  int flowrate = hardware.read_waterflow_rate();
-  Serial.print("Flow rate reading: ");
-  Serial.println(flowrate);
+  // int flowrate = hardware.read_waterflow_rate();
+  // Serial.print("Flow rate reading: ");
+  // Serial.println(flowrate);
 
-  // if (firebase.is_leak_scanning()) {
-  //   int res = scan_leak();
-  //   firebase.set_leak_detected(res);
-  // }
+  int leak_flag = firebase.is_leak_scanning();
+  Serial.print("Flag");
+  Serial.println(leak_flag);
+  
+  if (leak_flag) {
+    Serial.println("inside");
+    int res = scan_leak();
+    Serial.print("Leak scan result: ");
+    Serial.println(res);
+    firebase.set_leak_detected(res);
+    firebase.set_leak_scanning(0);
+  }
 
   // TODO: Remove the delay once done with testing
   // delay(5000);
