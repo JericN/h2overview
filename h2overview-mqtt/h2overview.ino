@@ -1,5 +1,4 @@
-
-
+#include <PubSubClient.h>
 #include <ESP8266WiFi.h>  // For D1 R1
 // #include <WiFi.h>   // For ESP32
 
@@ -25,7 +24,7 @@ PubSubClient client(espClient);
 
 const char *ssid = "dcs-students2";
 const char *password = "W1F14students";
-
+const char *mqtt_server = "broker.mqtt-dashboard.com";
 
 void setup_wifi() {
   delay(10);
@@ -200,32 +199,53 @@ int scan_leak() {
   return 3;
 }
 
-void valve_control() {
-  // Get the valve state from the firebase
-  bool valveFlag = firebase.get_valve_state();
-  // Serial.print("Firebase Valve State:");
-  // Serial.println(valveFlag);
 
-  // Toggle the valve state if the button is pressed
+void local_valve_control(){
   int buttonPress = hardware.get_solenoid_button_press();
-  // Serial.print("Button Valve State:");
-  // Serial.println(buttonPress);
   if (buttonPress) {
-    firebase.set_valve_state(!valveFlag);
-    valveFlag = !valveFlag;
+    int state = hardware.get_solenoid_state();
+    hardware.set_solenoid_state(!state);
+    hardware.set_led_state(!state);
+    Serial.print("Valve state changed to: ");
+    Serial.println(!state);
   }
-
-  // Set the valve state if the flag is different from the current state
-  bool valveState = hardware.get_solenoid_state();
-  // Serial.print("Valve State:");
-  // Serial.println(valveState);
-  if (valveFlag != valveState) {
-    hardware.set_solenoid_state(valveFlag);
-    Serial.println("FLIPPED");
-  }
-
-  hardware.set_led_state(valveFlag);
 }
+
+void remote_valve_control(int remoteState) {
+  int localState = hardware.get_solenoid_state();
+
+  if (remoteState != localState) {
+    hardware.set_solenoid_state(remoteState);
+    hardware.set_led_state(remoteState);
+    Serial.print("Valve state changed to: ");
+    Serial.println(remoteState);
+  }
+}
+
+void callback(char *topic, byte *payload, unsigned int length) {
+  payload[length] = '\0';
+  int value = atoi((char*)payload);
+
+  Serial.print("From topic [");
+  Serial.print(topic);
+  Serial.print("] Message arrived [");
+  Serial.print(value);
+  Serial.println("]");
+
+  // Execute shutdown if the message is "END"
+  if (strcmp(topic, "h2overview/H2O-12345/valve_state") == 0){
+    remote_valve_control(value);
+  }else if (strcmp(topic, "h2overview/H2O-12345/leak_scan") == 0){
+    
+  }else {
+    Serial.println("Invalid topic");
+  }
+
+  Serial.print("Callback done from topic [");
+  Serial.print(topic);
+  Serial.print("]");
+}
+
 
 
 // =============================================================================
@@ -245,10 +265,10 @@ void setup() {
 }
 
 void loop() {
-  if (!client.connected()) reconnect();
+  if (!client.connected()) reconnect_mqtt();
   client.loop();
 
-  // valve_control();
+  local_valve_control();
 
   int leak_flag = firebase.is_leak_scanning();
   if (leak_flag) {
