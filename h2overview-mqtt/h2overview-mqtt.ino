@@ -4,10 +4,11 @@
 
 #include "physical.h"
 #include "server.h"
+#include "feature.h"
 
 Physical hardware;
+Feature feature(hardware);
 FirebaseServer firebase;
-
 
 #define DEVICE_ID "H2O-12345"
 
@@ -200,27 +201,6 @@ int scan_leak() {
 }
 
 
-void local_valve_control(){
-  int buttonPress = hardware.get_solenoid_button_press();
-  if (buttonPress) {
-    int state = hardware.get_solenoid_state();
-    hardware.set_solenoid_state(!state);
-    hardware.set_led_state(!state);
-    Serial.print("Valve state changed to: ");
-    Serial.println(!state);
-  }
-}
-
-void remote_valve_control(int remoteState) {
-  int localState = hardware.get_solenoid_state();
-
-  if (remoteState != localState) {
-    hardware.set_solenoid_state(remoteState);
-    hardware.set_led_state(remoteState);
-    Serial.print("Valve state changed to: ");
-    Serial.println(remoteState);
-  }
-}
 
 void callback(char *topic, byte *payload, unsigned int length) {
   payload[length] = '\0';
@@ -234,9 +214,9 @@ void callback(char *topic, byte *payload, unsigned int length) {
 
   // Execute shutdown if the message is "END"
   if (strcmp(topic, "h2overview/H2O-12345/valve_state") == 0){
-    remote_valve_control(value);
+    feature.remote_valve_control(value);
   }else if (strcmp(topic, "h2overview/H2O-12345/leak_scan") == 0){
-    
+    Serial.println("Scanning for leaks...");
   }else {
     Serial.println("Invalid topic");
   }
@@ -268,7 +248,7 @@ void loop() {
   if (!client.connected()) reconnect_mqtt();
   client.loop();
 
-  local_valve_control();
+  feature.local_valve_control();
 
   int leak_flag = firebase.is_leak_scanning();
   if (leak_flag) {
