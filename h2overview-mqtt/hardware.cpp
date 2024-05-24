@@ -1,33 +1,33 @@
-#include "physical.h"
+#include "hardware.h"
 
 // Initialize static variable
-unsigned long Physical::PULSE = 0;
+unsigned long Hardware::PULSE = 0;
 
-Physical::Physical() {
+Hardware::Hardware() {
   // Constructor
 }
 
 // Interrupt handler
-void IRAM_ATTR Physical::pulse_counter() {
-  Physical::PULSE++;
+void IRAM_ATTR Hardware::pulse_counter() {
+  Hardware::PULSE++;
 }
 
 // Initialize pins
-void Physical::initialize_pins() {
+void Hardware::initialize_pins() {
   pinMode(FLOW_SENSOR_PIN, INPUT);
   pinMode(SOLENOID_RELAY_PIN, OUTPUT);
   pinMode(SOLENOID_BUTTON_PIN, INPUT_PULLUP);
   pinMode(LED_1, OUTPUT);
-  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), Physical::pulse_counter, RISING);
+  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), Hardware::pulse_counter, RISING);
 }
 
 // Get the state of the solenoid
-int Physical::get_solenoid_state() {
+int Hardware::get_solenoid_state() {
   return digitalRead(SOLENOID_RELAY_PIN);
 }
 
 // Get the state of the solenoid button
-int Physical::get_solenoid_button_press() {
+int Hardware::get_solenoid_button_press() {
   int reading = digitalRead(SOLENOID_BUTTON_PIN);
 
   if (reading != lastButtonState) {
@@ -48,30 +48,30 @@ int Physical::get_solenoid_button_press() {
 }
 
 // Set the state of the solenoid
-void Physical::set_solenoid_state(int state) {
+void Hardware::set_solenoid_state(int state) {
   digitalWrite(SOLENOID_RELAY_PIN, state);
 }
 
-void Physical::set_led_state(int state) {
+void Hardware::set_led_state(int state) {
   digitalWrite(LED_1, state);
 }
 
 // Read the water flow rate
-float Physical::read_waterflow_rate() {
-  Physical::PULSE = 0;
+float Hardware::read_waterflow_rate() {
+  Hardware::PULSE = 0;
   delay(1000);
-  return 2.663 * Physical::PULSE;
+  return 2.663 * Hardware::PULSE;
 }
 
 // Read the water flow rate
-float Physical::read_waterflow_rate_timed(int time) {
-  Physical::PULSE = 0;
+float Hardware::read_waterflow_rate_timed(int time) {
+  Hardware::PULSE = 0;
   delay(time);
-  return 2.663 * Physical::PULSE;
+  return 2.663 * Hardware::PULSE;
 }
 
 // Read the water pressure
-float Physical::read_water_pressure() {
+float Hardware::read_water_pressure() {
   float V = analogRead(PRESSURE_SENSOR_PIN) * 5.00 / 1023;
   // FIXME: calibrate pressure
   float P = (V - 0.83) * 400;

@@ -2,11 +2,11 @@
 #include <ESP8266WiFi.h>  // For D1 R1
 // #include <WiFi.h>   // For ESP32
 
-#include "physical.h"
+#include "hardware.h"
 #include "server.h"
 #include "feature.h"
 
-Physical hardware;
+Hardware hardware;
 Feature feature(hardware);
 FirebaseServer firebase;
 

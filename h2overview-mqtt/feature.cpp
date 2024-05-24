@@ -2,7 +2,7 @@
 #include "physical.h"
 
 // Constructor implementation
-Feature::Feature(Physical& hardware) : hardware(hardware) {
+Feature::Feature(Hardware& hardware) : hardware(hardware) {
 }
 
 void Feature::local_valve_control(){

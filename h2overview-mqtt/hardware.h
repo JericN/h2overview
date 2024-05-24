@@ -1,5 +1,5 @@
-#ifndef PHYSICAL_H
-#define PHYSICAL_H
+#ifndef HARDWARE_H
+#define HARDWARE_H
 
 // #define PRESSURE_SENSOR_PIN A0
 #define PRESSURE_SENSOR_PIN A0
@@ -13,9 +13,9 @@
 
 #include <Arduino.h>
 
-class Physical {
+class Hardware {
  public:
-  Physical();
+  Hardware();
 
   void initialize_pins();
   int get_solenoid_state();
