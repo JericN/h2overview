@@ -1,9 +1,7 @@
 #include "feature.h"
-#include "physical.h"
 
 // Constructor implementation
-Feature::Feature(Hardware& hardware) : hardware(hardware) {
-}
+Feature::Feature(Hardware& hardware, FirebaseServer& firebase) : hardware(hardware), firebase(firebase) {}
 
 void Feature::local_valve_control(){
   int buttonPress = hardware.get_solenoid_button_press();

@@ -7,8 +7,8 @@
 #include "feature.h"
 
 Hardware hardware;
-Feature feature(hardware);
 FirebaseServer firebase;
+Feature feature(hardware, firebase);
 
 #define DEVICE_ID "H2O-12345"
 
@@ -201,6 +201,9 @@ int scan_leak() {
 }
 
 
+// =============================================================================
+// ============================== MQTT CALLBACK ================================
+// =============================================================================
 
 void callback(char *topic, byte *payload, unsigned int length) {
   payload[length] = '\0';
@@ -212,7 +215,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
   Serial.print(value);
   Serial.println("]");
 
-  // Execute shutdown if the message is "END"
+  // This is the routing logic for the MQTT messages
   if (strcmp(topic, "h2overview/H2O-12345/valve_state") == 0){
     feature.remote_valve_control(value);
   }else if (strcmp(topic, "h2overview/H2O-12345/leak_scan") == 0){
