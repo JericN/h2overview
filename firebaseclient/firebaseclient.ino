@@ -24,9 +24,6 @@
 #include <ESP8266WiFi.h>
 #include <FirebaseClient.h>
 
-#define WIFI_SSID "WIFI_AP"
-#define WIFI_PASSWORD "WIFI_PASSWORD"
-
 // The API key can be obtained from Firebase console > Project Overview >
 // Project settings.
 #define API_KEY "Web_API_KEY"
@@ -38,10 +35,48 @@
  * settings, select "Service accounts" tab and click at "Generate new private
  * key" button
  */
-#define FIREBASE_PROJECT_ID "PROJECT_ID"
-#define FIREBASE_CLIENT_EMAIL "CLIENT_EMAIL"
+
+#define WIFI_SSID "Rex Judicata"
+#define WIFI_PASSWORD "93291123aaaA."
+
+#define FIREBASE_PROJECT_ID "h2overview-iot"
+#define FIREBASE_CLIENT_EMAIL "firebase-adminsdk-w6f0t@h2overview-iot.iam.gserviceaccount.com"
+
 const char PRIVATE_KEY[] PROGMEM =
-    "-----BEGIN PRIVATE KEY-----XXXXXXXXXXXX-----END PRIVATE KEY-----\n";
+    "-----BEGIN PRIVATE "
+    "KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCfIqHkaUPPA/"
+    "wx\nAMfBgu3P+99TaA8maL7mzmnsg9VNKnn6UF912MSpDfb3kO9bkugz/"
+    "lRRas3y8cIm\nvLlFnqhOqeq6KR65Jw0lUe+YJsn1BGWMx0a6BZvm7Y/yr2bcN/"
+    "1M9e6N8o+"
+    "cBgau\nF2jFO65fD9O2HCY9TYy5XbZWzoaQjTc4A6TVNUKfK7vfIfxDJeQkDZ86SWRRTLnc\nc"
+    "r0v5cKOOhEg7AJyPjzTHmvRWZXK5nR/FVKzuyVGdYBixcIHeX7/"
+    "A6Dox7jlWrOZ\nOT2Dp73X8NnifLCtq9GjPZe9a4Nr7LgM2YtVVou86KEIcRvsTyQsrIglf61K"
+    "NK19\nCUvA9hNlAgMBAAECggEACQ5ogN44vK7xCueMzAd5JI1PT/"
+    "4rtoze0wsg3hPr71X2\ngSH9J3DBqGP3ZRlmIHkDe/StCcEhSAKC1moxGl7axzdGTiKJnBHhM/"
+    "mDas5HpLOu\nWnemH8SynaQcErycBvZXalTTUa1h3N2UQxNpTqgvK+"
+    "ZzrvklIqH82zkTvRbzHjDE\nNUOeqRikxDsy6Ta14ROOUUKaHDTXnXU/"
+    "RMwezPKo+PIWfBRoDF8vSLYwxfyqVC+"
+    "V\nsJ3CgAaM7rDlPIfDr52S3aeRHqPWYhfDccpM5IsliUblpbkzlVbMnZyYdpTw7Coz\nbhE/"
+    "I7xbt4zxpEd7TJGr4jeJNJuh4aCD7HjHg5yY9QKBgQDL2V3+x1+"
+    "DsqVufyxf\nBLi8m1m4h7GFR0ev5x09alwxvZL8FMKHNA3cBwX++"
+    "ZAuxBPy8EisTh1qq68d5ja4\nGQW73a3ntcJZ0q+FI+"
+    "qb1guNia03TULFZPfvn+"
+    "b8a7bkAzhXf1HNzkmjhQ0WMdp3\nEiwSxFyGuQCvMonVC2VeK3FPdwKBgQDH2NYFdWm3ubYcYl"
+    "eONCV9x6ZsKuXEBUUq\nlOSAXKAnQLCjpQc4yvlgUupP9Oe99N4jMEC7sJD3CTQqhETk3QAG6C"
+    "bhqL1S"
+    "ZwQI\nKl79RqYuffYZ7RgmjQSPOrFGAwSHic2Mtwh+G0DV67bx07J4vJn3FKiik/"
+    "OfQvOE\n43DoUVpDAwKBgGIUF3F6I66NyaK8dXDSKMA2TpjGUNc7UHaF0D+"
+    "4aNtVxt6abm32\n0aRHjM787C5UEPUWPyEIBIdKS1srZLB2+"
+    "ZdGNWICxZvKDsEUYtDPz4ct8rVk6vdm\neRRF7zEL8lcKZZVToNxQoIWYgo9nNSGNEL+"
+    "G0q3PXVDuE/r5HLCOXlpJAoGAM/"
+    "97\nUFhIdYFgnOoJlfqDdsKnzqUqu2ITqQysl6mCEjSGwU2DH4fQcvuf88XpNkesNMOt\nVCiQ"
+    "z3YZmKZptpK6GxH0a+qXuAUNy4IazRPA0X/8tKo4Cm/"
+    "Oq+W9klXeq9VzIhXN\no+"
+    "I7cG2wYCOQ4FFSTjOV3RdZ4CpvajgzfH8OWTkCgYBbv43TqsEOewk7ru/"
+    "e61tS\n8YG2XfDQukxHV/dqc4pLUtcehLGH3IQVKj8uYlJQtkyTcXkDcrjJoB5oEmV/"
+    "lhN7\nm3pB6dTI/IraaJfeZ0WZm/U7NFhXr7sn1AwX/NM/ms1wYe67uQ+YOqEphPly4Wz1\n8/"
+    "Rd4UnOdOG5Ft8YSitVnQ==\n-----END PRIVATE KEY-----\n"; 
+  
 
 void authHandler();
 
