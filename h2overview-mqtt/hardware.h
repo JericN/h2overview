@@ -29,7 +29,7 @@ class Hardware {
  private:
   // interrupt handler
   static void IRAM_ATTR pulse_counter();
- 
+
   // Global variable
   static unsigned long PULSE;
 

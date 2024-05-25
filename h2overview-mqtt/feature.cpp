@@ -3,7 +3,7 @@
 // Constructor implementation
 Feature::Feature(Hardware& hardware, FirebaseServer& firebase) : hardware(hardware), firebase(firebase) {}
 
-void Feature::local_valve_control(){
+void Feature::local_valve_control() {
   int buttonPress = hardware.get_solenoid_button_press();
   if (buttonPress) {
     int state = hardware.get_solenoid_state();

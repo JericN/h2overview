@@ -1,10 +1,10 @@
-#include <PubSubClient.h>
 #include <ESP8266WiFi.h>  // For D1 R1
+#include <PubSubClient.h>
 // #include <WiFi.h>   // For ESP32
 
+#include "feature.h"
 #include "hardware.h"
 #include "server.h"
-#include "feature.h"
 
 Hardware hardware;
 FirebaseServer firebase;
@@ -19,13 +19,12 @@ Feature feature(hardware, firebase);
 #define SCAN_COUNT 5
 #define BIG_LEAK_THRESHOLD 0.5
 
-
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-const char *ssid = "dcs-students2";
-const char *password = "W1F14students";
-const char *mqtt_server = "broker.mqtt-dashboard.com";
+const char* ssid = "dcs-students2";
+const char* password = "W1F14students";
+const char* mqtt_server = "broker.mqtt-dashboard.com";
 
 void setup_wifi() {
   delay(10);
@@ -67,8 +66,6 @@ void reconnect_mqtt() {
     }
   }
 }
-
-
 
 // =============================================================================
 // ============================== PHYSICAL LAYER ===============================
@@ -120,7 +117,7 @@ int scan_leak() {
   int pressure = hardware.read_water_pressure();
   Serial.print("Pressure reading: ");
   Serial.println(pressure);
-  if (pressure < 0){
+  if (pressure < 0) {
     Serial.println("No water pressure detected");
     return 3;
   }
@@ -139,7 +136,7 @@ int scan_leak() {
     for (int j = 0; j < SCAN_COUNT; j++) {
       Serial.print("Scan: ");
       Serial.println(j);
-      
+
       hardware.set_solenoid_state(SOLENOID_OPEN);
       big_leak_result[j] = big_leak_scan();
       Serial.print("Big leak scan done: ");
@@ -200,12 +197,11 @@ int scan_leak() {
   return 3;
 }
 
-
 // =============================================================================
 // ============================== MQTT CALLBACK ================================
 // =============================================================================
 
-void callback(char *topic, byte *payload, unsigned int length) {
+void callback(char* topic, byte* payload, unsigned int length) {
   payload[length] = '\0';
   int value = atoi((char*)payload);
 
@@ -216,11 +212,11 @@ void callback(char *topic, byte *payload, unsigned int length) {
   Serial.println("]");
 
   // This is the routing logic for the MQTT messages
-  if (strcmp(topic, "h2overview/H2O-12345/valve_state") == 0){
+  if (strcmp(topic, "h2overview/H2O-12345/valve_state") == 0) {
     feature.remote_valve_control(value);
-  }else if (strcmp(topic, "h2overview/H2O-12345/leak_scan") == 0){
+  } else if (strcmp(topic, "h2overview/H2O-12345/leak_scan") == 0) {
     Serial.println("Scanning for leaks...");
-  }else {
+  } else {
     Serial.println("Invalid topic");
   }
 
@@ -228,8 +224,6 @@ void callback(char *topic, byte *payload, unsigned int length) {
   Serial.print(topic);
   Serial.print("]");
 }
-
-
 
 // =============================================================================
 // ============================== SETUP AND LOOP ===============================
@@ -248,7 +242,8 @@ void setup() {
 }
 
 void loop() {
-  if (!client.connected()) reconnect_mqtt();
+  if (!client.connected())
+    reconnect_mqtt();
   client.loop();
 
   feature.local_valve_control();
