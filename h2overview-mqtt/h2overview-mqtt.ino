@@ -1,14 +1,14 @@
-#include <ESP8266WiFi.h>  // For D1 R1
+#include <ESP8266WiFi.h>
+// #include <WiFi.h>
 #include <PubSubClient.h>
-// #include <WiFi.h>   // For ESP32
 
 #include "feature.h"
 #include "hardware.h"
 #include "server.h"
 
 Hardware hardware;
-FirebaseServer firebase;
-Feature feature(hardware, firebase);
+MQTTserver server;
+Feature feature(hardware, server);
 
 #define DEVICE_ID "H2O-12345"
 
@@ -19,15 +19,23 @@ Feature feature(hardware, firebase);
 #define SCAN_COUNT 5
 #define BIG_LEAK_THRESHOLD 0.5
 
-WiFiClient espClient;
-PubSubClient client(espClient);
+bool is_health_scan = false;
+unsigned int health_scan_time;
+bool is_scheduled_valve_control = false;
+unsigned int scheduled_valve_start;
+unsigned int scheduled_valve_end;
 
-const char* ssid = "dcs-students2";
-const char* password = "W1F14students";
+// const char* ssid = "Rex Judicata";
+// const char* password = "93291123aaaA.";
+const char* ssid = "Jeric";
+const char* password = "12121212";
 const char* mqtt_server = "broker.mqtt-dashboard.com";
 
+int timezone = 8* 3600;
+int dst = 0;
+
 void setup_wifi() {
-  delay(10);
+  delay(1000);
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -47,163 +55,18 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
-void reconnect_mqtt() {
-  // Loop until we're reconnected
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    char clientId[50];
-    sprintf(clientId, "ESP8266Client-%04X", random(0xffff));
-
-    if (client.connect(clientId)) {
-      Serial.println("connected");
-      // TODO: make the topic dynamic
-      client.subscribe("h2overview/H2O-12345/#");
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      delay(5000);
-    }
-  }
-}
-
-// =============================================================================
-// ============================== PHYSICAL LAYER ===============================
-// =============================================================================
-
-// Function to check if all elements are the same
-bool areResultConsistent(int arr[SCAN_COUNT]) {
-  int firstElement = arr[0];
-  for (int i = 1; i < SCAN_COUNT; i++) {
-    if (arr[i] != firstElement) {
-      return false;
-    }
-  }
-  return true;
-}
-
-int big_leak_scan() {
-  int start = millis();
-  // TODO: get scan duration
-  while (millis() - start < 5000) {
-    float flow = hardware.read_waterflow_rate();
-    Serial.print("Flow rate: ");
-    Serial.println(flow);
-    if (flow > BIG_LEAK_THRESHOLD) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-int small_leak_scan() {
-  float initialRead = hardware.read_water_pressure();
-  int start = millis();
-  // TODO: get scan duration
-  while (millis() - start < 30000) {
-    // TODO: if (get_interrupt()) return 0;
-  }
-  float finalRead = hardware.read_water_pressure();
-  return finalRead < initialRead;
-}
-
-// Scan for leaks in the system
-// FIXME: This function is untested
-// FIXME: This function is untested
-// FIXME: This function is untested
-int scan_leak() {
-  // TODO: get baseline pressure
-  // FIXME: replace correct calibration
-  int pressure = hardware.read_water_pressure();
-  Serial.print("Pressure reading: ");
-  Serial.println(pressure);
-  if (pressure < 0) {
-    Serial.println("No water pressure detected");
-    return 3;
-  }
-
-  Serial.println("Scanning for leaks...");
-
-  int big_leak_result[SCAN_COUNT];
-  int small_leak_result[SCAN_COUNT];
-
-  // Retry loop if the big leak or small leak results are inconsistent
-  for (int i = 0; i < SCAN_RETRIES; i++) {
-    Serial.print("Retry: ");
-    Serial.println(i);
-
-    // Scan for big and small leaks
-    for (int j = 0; j < SCAN_COUNT; j++) {
-      Serial.print("Scan: ");
-      Serial.println(j);
-
-      hardware.set_solenoid_state(SOLENOID_OPEN);
-      big_leak_result[j] = big_leak_scan();
-      Serial.print("Big leak scan done: ");
-      Serial.println(big_leak_result[j]);
-
-      delay(2000);
-      hardware.set_solenoid_state(SOLENOID_CLOSED);
-      delay(2000);
-
-      // small_leak_result[j] = small_leak_scan();
-      // Serial.println("Small leak scan done");
-      // Serial.println(small_leak_result[j]);
-    }
-
-    Serial.println("Done scanning for leaks...");
-
-    // Check if the results are consistent
-    // print big leak values
-    for (int j = 0; j < SCAN_COUNT; j++) {
-      Serial.print(big_leak_result[j]);
-      Serial.print(" ");
-    }
-    Serial.println();
-
-    bool big_leak_consistent = areResultConsistent(big_leak_result);
-    Serial.print("Big leak consistent: ");
-    Serial.println(big_leak_consistent);
-
-    if (big_leak_consistent) {
-      int big_leak = big_leak_result[0];
-      if (big_leak == 1) {
-        return 2;  // big leak
-      } else if (big_leak == 0) {
-        return 0;  // no leak
-      }
-    }
-
-    // bool small_leak_consistent = areResultConsistent(small_leak_result);
-
-    // // Analyze the results
-    // if (big_leak_consistent && small_leak_consistent) {
-    //   int big_leak = big_leak_result[0];
-    //   int small_leak = small_leak_result[0];
-
-    //   if (big_leak == 1 && small_leak == 1) {
-    //     return 2;  // big leak
-    //   } else if (big_leak == 0 && small_leak == 1) {
-    //     return 1;  // small leak
-    //   } else if (big_leak == 0 && small_leak == 0) {
-    //     return 0;  // no leak
-    //   } else if (big_leak == 1 && small_leak == 0) {
-    //     continue;  // this is not possible, retry
-    //   }
-    // }
-  }
-
-  // If the results are still inconsistent after retries
-  return 3;
-}
 
 // =============================================================================
 // ============================== MQTT CALLBACK ================================
 // =============================================================================
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  payload[length] = '\0';
-  int value = atoi((char*)payload);
+  // copy the payload to a string
+  char value[length + 1];
+  for (int i = 0; i < length; i++) {
+    value[i] = (char)payload[i];
+  }
+  value[length] = '\0';
 
   Serial.print("From topic [");
   Serial.print(topic);
@@ -213,9 +76,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // This is the routing logic for the MQTT messages
   if (strcmp(topic, "h2overview/H2O-12345/valve_state") == 0) {
+    Serial.println("Setting valve state...");
     feature.remote_valve_control(value);
   } else if (strcmp(topic, "h2overview/H2O-12345/leak_scan") == 0) {
     Serial.println("Scanning for leaks...");
+    // feature.manual_leak_scan(value);
+  } else if (strcmp(topic, "h2overview/H2O-12345/scheduled_valve_control") == 0) {
+    Serial.println("Setting scheduled valve control...");
+    feature.set_scheduled_valve_control(value);
+  } else if (strcmp(topic, "h2overview/H2O-12345/health_scan") == 0) {
+    Serial.println("Scanning for health...");
+    feature.set_health_scan(value);
   } else {
     Serial.println("Invalid topic");
   }
@@ -230,31 +101,46 @@ void callback(char* topic, byte* payload, unsigned int length) {
 // =============================================================================
 
 void setup() {
+  delay(3000);
   Serial.begin(9600);
-  delay(5000);
+  delay(3000);
 
+  // Initialize hardware pins
+  Serial.println("Initializing hardware pins...");
   hardware.initialize_pins();
+  Serial.println("Hardware pins initialized");
+
+  // Setup WiFi
+  Serial.println("Setting up WiFi...");
   setup_wifi();
-  client.setServer(mqtt_server, 1883);
-  // TODO: make the topic dynamic
-  client.subscribe("h2overview/H2O-12345/#");
-  client.setCallback(callback);
+  Serial.println("WiFi setup complete");
+  
+  // Setup MQTT
+  Serial.println("Setting up MQTT...");
+  server.setup_mqtt(mqtt_server, callback);
+  Serial.println("MQTT setup complete");
+
+  // Setup Time
+  configTime(timezone, dst, "pool.ntp.org","time.nist.gov");
+  Serial.println("\nWaiting for Internet time");
+
+  while(!time(nullptr)){
+     Serial.print("*");
+     delay(1000);
+  }
+
+  Serial.println("\nTime response....OK");
 }
 
 void loop() {
-  if (!client.connected())
-    reconnect_mqtt();
-  client.loop();
+  server.loop();
 
-  feature.local_valve_control();
-
-  int leak_flag = firebase.is_leak_scanning();
-  if (leak_flag) {
-    int res = scan_leak();
-    firebase.set_leak_detected(res);
-    firebase.set_leak_scanning(0);
-  }
-
-  // TODO: Remove the delay once done with testing
-  // delay(5000);
+  // Serial.println("Looping...");
+  // feature.local_valve_control();
+  // feature.check_scheduled_valve_control();
+  // feature.send_waterflow_data();
+  float pressure = hardware.read_water_pressure();
+  Serial.print("Pressure: ");
+  Serial.println(pressure);
+  delay(500);
 }

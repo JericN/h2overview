@@ -2,6 +2,7 @@
 
 // Initialize static variable
 unsigned long Hardware::PULSE = 0;
+unsigned long Hardware::HOURLY_PULSE = 0;
 
 Hardware::Hardware() {
   // Constructor
@@ -60,20 +61,26 @@ void Hardware::set_led_state(int state) {
 float Hardware::read_waterflow_rate() {
   Hardware::PULSE = 0;
   delay(1000);
-  return 2.663 * Hardware::PULSE;
+  return 8.5714 * Hardware::PULSE;
 }
 
 // Read the water flow rate
 float Hardware::read_waterflow_rate_timed(int time) {
   Hardware::PULSE = 0;
   delay(time);
-  return 2.663 * Hardware::PULSE;
+  return 8.5714 * Hardware::PULSE;
 }
 
 // Read the water pressure
 float Hardware::read_water_pressure() {
-  float V = analogRead(PRESSURE_SENSOR_PIN) * 5.00 / 1023;
-  // FIXME: calibrate pressure
-  float P = (V - 0.83) * 400;
-  return P;
+  int V = analogRead(PRESSURE_SENSOR_PIN);
+  float pressure = map(V, 0, 1023, 0, 100);
+  return pressure;
+}
+
+float Hardware::read_cummulative_water() {
+  float output = 8.5714 * Hardware::HOURLY_PULSE;
+  Hardware::HOURLY_PULSE = 0;
+  return output;
+
 }

@@ -1,15 +1,17 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
-// #define PRESSURE_SENSOR_PIN A0
 #define PRESSURE_SENSOR_PIN A0
-// #define FLOW_SENSOR_PIN D4
-#define FLOW_SENSOR_PIN D4
-// #define SOLENOID_BUTTON_PIN D3
-#define SOLENOID_BUTTON_PIN D6
-// #define SOLENOID_RELAY_PIN D2
-#define SOLENOID_RELAY_PIN D5
-#define LED_1 D7
+#define SOLENOID_RELAY_PIN D7
+#define SOLENOID_BUTTON_PIN D4
+#define FLOW_SENSOR_PIN D6
+#define LED_1 D3
+
+// #define PRESSURE_SENSOR_PIN 32
+// #define FLOW_SENSOR_PIN 4
+// #define SOLENOID_BUTTON_PIN 6
+// #define SOLENOID_RELAY_PIN 5
+// #define LED_1 7
 
 #include <Arduino.h>
 
@@ -25,13 +27,16 @@ class Hardware {
   float read_waterflow_rate();
   float read_waterflow_rate_timed(int time);
   float read_water_pressure();
+  float read_cummulative_water();
 
  private:
   // interrupt handler
   static void IRAM_ATTR pulse_counter();
+  // static void pulse_counter();
 
   // Global variable
   static unsigned long PULSE;
+  static unsigned long HOURLY_PULSE;
 
   // Debounce variables
   int buttonState;

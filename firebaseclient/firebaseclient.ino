@@ -111,7 +111,7 @@ int counter = 0;
 unsigned long dataMillis = 0;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   Serial.print("Connecting to Wi-Fi");

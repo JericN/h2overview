@@ -1,80 +1,68 @@
 #include "server.h"
 
-// Initialize static variable
-Firebase FirebaseServer::firebase(REFERENCE_URL);
-String FirebaseServer::pref_path = "devices/" + String(DEVICE_SERIAL) + "/preference";
-String FirebaseServer::flag_path = "devices/" + String(DEVICE_SERIAL) + "/flags";
-String FirebaseServer::data_path = "devices/" + String(DEVICE_SERIAL) + "/data";
-
-FirebaseServer::FirebaseServer() {
-  // Constructor
+MQTTserver::MQTTserver() : client(espClient) {
+  // Constructor implementation (if needed)
 }
 
-// =================================================================
-// =========================== PREFENCES ===========================
-// =================================================================
-
-LeakPref FirebaseServer::get_small_leak_preference() {
-  // Fetch the data from Firebase
-  String data = firebase.getString(pref_path + "/leak_scan");
-
-  // Deserialize the data
-  JsonDocument doc;
-  deserializeJson(doc, data);
-
-  // Extract the deserialized data
-  bool scheduled = doc["scheduled"];
-  unsigned long duration = doc["duration"];
-  unsigned long start_time = doc["start_time"];
-  unsigned long end_time = doc["end_time"];
-
-  return LeakPref{scheduled, duration, start_time, end_time};
+void MQTTserver::setup_mqtt(const char* mqtt_server, void (*callback)(char*, uint8_t*, unsigned int)) {
+  client.setServer(mqtt_server, 1883);
+  client.subscribe("h2overview/H2O-12345/#");
+  client.setCallback(callback);
 }
 
-// =================================================================
-// ============================= FLAGS =============================
-// =================================================================
-
-bool FirebaseServer::get_valve_state() {
-  return firebase.getInt("devices/H2O-1234/flags/valve_state");
-}
-
-bool FirebaseServer::is_leak_scanning() {
-  return firebase.getInt(flag_path + "/leak_scanning");
-}
-
-bool FirebaseServer::is_leak_detected() {
-  return firebase.getInt(flag_path + "/leak_detected");
-}
-
-void FirebaseServer::set_valve_state(int state) {
-  int res = firebase.setInt(flag_path + "/valve_state", state);
-  if (res == FAILURE) {
-    Serial.println("[ERROR] Firebase: Failed to set valve_state flag");
+void MQTTserver::reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    char clientId[50];
+    sprintf(clientId, "ESP8266Client-%04X", random(0xffff));
+    // Attempt to connect
+    if (client.connect(clientId)) {
+      Serial.println("connected");
+      // Subscribe to the topic
+      client.subscribe("h2overview/H2O-12345/#");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
   }
 }
 
-void FirebaseServer::set_leak_scanning(int state) {
-  int res = firebase.setInt(flag_path + "/leak_scanning", state);
-  if (res == FAILURE) {
-    Serial.println("[ERROR] Firebase: Failed to set leak_scanning flag");
+void MQTTserver::set_valve_state(int state) {
+  if (!client.connected()) {
+    reconnect();
   }
+  client.publish("h2overview/out/H2O-12345/valve_state", String(state).c_str());
 }
 
-void FirebaseServer::set_leak_detected(int state) {
-  int res = firebase.setInt(flag_path + "/leak_detected", state);
-  if (res == FAILURE) {
-    Serial.println("[ERROR] Firebase: Failed to set leak_detected flag");
+void MQTTserver::set_scan_result(int result) {
+  if (!client.connected()) {
+    reconnect();
   }
+  client.publish("h2overview/out/H2O-12345/leak_scan_result", String(result).c_str());
 }
 
-// ==================================================================
-// ============================== DATA ==============================
-// ==================================================================
-
-void FirebaseServer::send_waterflow(Waterflow data) {
-  int res = firebase.setFloat(data_path + "/water_flow/" + String(data.timestamp), data.value);
-  if (res == FAILURE) {
-    Serial.println("Failed to send Waterflow data to Firebase");
+void MQTTserver::send_waterflow(Waterflow flow) {
+  if (!client.connected()) {
+    reconnect();
   }
+  //convert WaterFlow to string
+  char* payload = (char*)malloc(100);
+  sprintf(payload, "{\"timestamp\": %lu, \"value\": %f}", flow.timestamp, flow.value);
+  Serial.println(payload);
+  client.publish("h2overview/out/H2O-12345/waterflow", payload);
+  free(payload);
+}
+
+
+
+void MQTTserver::loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
 }
