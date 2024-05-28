@@ -1,5 +1,5 @@
-#include <ESP8266WiFi.h>
-// #include <WiFi.h>
+// #include <ESP8266WiFi.h>
+#include <WiFi.h>
 #include <PubSubClient.h>
 
 #include "feature.h"
@@ -19,11 +19,13 @@ Feature feature(hardware, server);
 #define SCAN_COUNT 5
 #define BIG_LEAK_THRESHOLD 0.5
 
-bool is_health_scan = false;
-unsigned int health_scan_time;
+bool is_scheduled_health_scan = false;
+int health_scan_schedule_count = 0;
+ScheduleEntry health_scan_schedules[50];
+
 bool is_scheduled_valve_control = false;
-unsigned int scheduled_valve_start;
-unsigned int scheduled_valve_end;
+int valve_control_schedule_count = 0;
+ScheduleEntry valve_control_schedules[50];
 
 // const char* ssid = "Rex Judicata";
 // const char* password = "93291123aaaA.";
@@ -77,20 +79,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("]");
 
   // This is the routing logic for the MQTT messages
-  if (strcmp(topic, "h2overview/H2O-12345/valve_state") == 0) {
-    Serial.println("Setting valve state...");
+  if (strcmp(topic, "h2overview/H2O-12345/is_valve_open") == 0) {
     feature.remote_valve_control(value);
-  } else if (strcmp(topic, "h2overview/H2O-12345/leak_scan") == 0) {
-    // Serial.println("Scanning for Big leaks...");
-    // feature.big_leak_scan(value);
-    Serial.println("Scanning for Small leaks...");
-    feature.small_leak_scan(value);
+
+  } else if (strcmp(topic, "h2overview/H2O-12345/is_manual_leak_scan_running") == 0) {
+    feature.manual_leak_scan(value);
+
   } else if (strcmp(topic, "h2overview/H2O-12345/scheduled_valve_control") == 0) {
-    Serial.println("Setting scheduled valve control...");
     feature.set_scheduled_valve_control(value);
-  } else if (strcmp(topic, "h2overview/H2O-12345/health_scan") == 0) {
-    Serial.println("Scanning for health...");
-    feature.set_health_scan(value);
+
+  } else if (strcmp(topic, "h2overview/H2O-12345/scheduled_health_scan") == 0) {
+    feature.set_scheduled_health_scan(value);
+
   } else {
     Serial.println("Invalid topic");
   }
@@ -139,15 +139,9 @@ void setup() {
 void loop() {
   server.loop();
 
-  // Serial.println("Looping...");
   feature.local_valve_control();
-  // feature.check_scheduled_valve_control();
-  // feature.send_waterflow_data();
-  // float pressure = hardware.read_water_pressure();
-  //Serial.print("Pressure: ");
-  //
-  //Serial.println(pressure);
-  float rate = hardware.read_cummulative_water();
-  Serial.println(rate);
+  feature.check_scheduled_valve_control();
+  feature.check_scheduled_health_scan();
+  feature.send_waterflow_data();
   delay(100);
 }

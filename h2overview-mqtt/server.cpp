@@ -36,15 +36,38 @@ void MQTTserver::set_valve_state(int state) {
   if (!client.connected()) {
     reconnect();
   }
-  client.publish("h2overview/out/H2O-12345/valve_state", String(state).c_str());
+  client.publish("h2overview/out/H2O-12345/is_valve_open", String(state).c_str());
+}
+
+void MQTTserver::set_manual_leak_scan_running(int state) {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.publish("h2overview/out/H2O-12345/is_manual_leak_scan_running", String(state).c_str());
+}
+
+void MQTTserver::set_automated_scan_running(int state) {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.publish("h2overview/out/H2O-12345/is_automated_scan_running", String(state).c_str());
 }
 
 void MQTTserver::set_scan_result(int result) {
   if (!client.connected()) {
     reconnect();
   }
-  client.publish("h2overview/out/H2O-12345/leak_scan_result", String(result).c_str());
+  client.publish("h2overview/out/H2O-12345/manual_results", String(result).c_str());
 }
+
+
+void MQTTserver::set_health_scan_result(int result) {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.publish("h2overview/out/H2O-12345/auto_results", String(result).c_str());
+}
+
 
 void MQTTserver::send_waterflow(Waterflow flow) {
   if (!client.connected()) {
