@@ -27,6 +27,10 @@ class Feature {
   void set_scheduled_valve_control(char* value);
   void check_scheduled_valve_control();
   void send_waterflow_data();
+  int manual_leak_detection();
+  int scan_leak();
+  int small_leak_scan(char* value);
+  int big_leak_scan(char* value);
 
  private:
   Hardware& hardware;

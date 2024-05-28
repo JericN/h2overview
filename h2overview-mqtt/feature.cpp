@@ -122,3 +122,45 @@ void Feature::send_waterflow_data() {
   // }
 }
 
+int Feature::small_leak_scan(char* value) {
+  Serial.println("> In small leak scan");
+  
+  float initialRead = hardware.read_water_pressure();
+  delay(1000);
+  hardware.set_solenoid_state(CLOSE);
+  int start = millis();
+
+  while (millis() - start < 10000) {
+    // TODO: if (get_interrupt()) return 0;
+    delay(1000);
+    float sample = hardware.read_water_pressure();
+    Serial.println(sample);
+  }
+
+  float finalRead = hardware.read_water_pressure();
+  bool res =  finalRead < (initialRead - 2);
+  if(res){
+    Serial.println("Result: small leak detected!");
+    return 1;
+  }else{
+    Serial.println("Result: No detected!");
+    hardware.set_solenoid_state(OPEN);
+    return 0;
+  }
+}
+
+int Feature::big_leak_scan(char* value) {
+  Serial.println("> In big leak scan");
+  hardware.set_solenoid_state(OPEN);
+  float start_time = millis();
+  while(millis() - start_time < 10000) {
+    float sample = hardware.read_waterflow_rate();
+    if(hardware.read_waterflow_rate() > 1) {
+      Serial.println("Result: big leak detected!");
+      hardware.set_solenoid_state(CLOSE);
+      return 1;
+    }
+  }
+  Serial.println("Result: No detected!");
+  return 0;
+}

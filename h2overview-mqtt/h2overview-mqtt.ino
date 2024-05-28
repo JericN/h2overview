@@ -27,8 +27,10 @@ unsigned int scheduled_valve_end;
 
 // const char* ssid = "Rex Judicata";
 // const char* password = "93291123aaaA.";
-const char* ssid = "Jeric";
-const char* password = "12121212";
+// const char* ssid = "Jeric";
+// const char* password = "12121212";
+const char* ssid = "..";
+const char* password = "qqwweerr";
 const char* mqtt_server = "broker.mqtt-dashboard.com";
 
 int timezone = 8* 3600;
@@ -79,8 +81,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println("Setting valve state...");
     feature.remote_valve_control(value);
   } else if (strcmp(topic, "h2overview/H2O-12345/leak_scan") == 0) {
-    Serial.println("Scanning for leaks...");
-    // feature.manual_leak_scan(value);
+    // Serial.println("Scanning for Big leaks...");
+    // feature.big_leak_scan(value);
+    Serial.println("Scanning for Small leaks...");
+    feature.small_leak_scan(value);
   } else if (strcmp(topic, "h2overview/H2O-12345/scheduled_valve_control") == 0) {
     Serial.println("Setting scheduled valve control...");
     feature.set_scheduled_valve_control(value);
@@ -136,11 +140,14 @@ void loop() {
   server.loop();
 
   // Serial.println("Looping...");
-  // feature.local_valve_control();
+  feature.local_valve_control();
   // feature.check_scheduled_valve_control();
   // feature.send_waterflow_data();
-  float pressure = hardware.read_water_pressure();
-  Serial.print("Pressure: ");
-  Serial.println(pressure);
-  delay(500);
+  // float pressure = hardware.read_water_pressure();
+  //Serial.print("Pressure: ");
+  //
+  //Serial.println(pressure);
+  float rate = hardware.read_cummulative_water();
+  Serial.println(rate);
+  delay(100);
 }

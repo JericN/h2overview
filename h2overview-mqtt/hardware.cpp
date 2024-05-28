@@ -11,6 +11,7 @@ Hardware::Hardware() {
 // Interrupt handler
 void IRAM_ATTR Hardware::pulse_counter() {
   Hardware::PULSE++;
+  Hardware::HOURLY_PULSE++;
 }
 
 // Initialize pins
