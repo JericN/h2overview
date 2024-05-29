@@ -1,6 +1,6 @@
 // #include <ESP8266WiFi.h>
-#include <WiFi.h>
 #include <PubSubClient.h>
+#include <WiFi.h>
 
 #include "feature.h"
 #include "hardware.h"
@@ -37,7 +37,7 @@ const char* ssid = "Raspberry";
 const char* password = "54321edcba";
 const char* mqtt_server = "broker.mqtt-dashboard.com";
 
-int timezone = 8* 3600;
+int timezone = 8 * 3600;
 int dst = 0;
 
 void setup_wifi() {
@@ -60,7 +60,6 @@ void setup_wifi() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 }
-
 
 // =============================================================================
 // ============================== MQTT CALLBACK ================================
@@ -93,9 +92,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   } else if (strcmp(topic, "h2overview/H2O-12345/scheduled_health_scan") == 0) {
     feature.set_scheduled_health_scan(value);
 
-  } else if(strcmp(topic, "h2overview/H2O-12345/is_alive") == 0) {
+  } else if (strcmp(topic, "h2overview/H2O-12345/is_alive") == 0) {
     feature.is_alive();
-    
+
   } else {
     Serial.println("Invalid topic");
   }
@@ -123,19 +122,19 @@ void setup() {
   Serial.println("Setting up WiFi...");
   setup_wifi();
   Serial.println("WiFi setup complete");
-  
+
   // Setup MQTT
   Serial.println("Setting up MQTT...");
   server.setup_mqtt(mqtt_server, callback);
   Serial.println("MQTT setup complete");
 
   // Setup Time
-  configTime(timezone, dst, "pool.ntp.org","time.nist.gov");
+  configTime(timezone, dst, "pool.ntp.org", "time.nist.gov");
   Serial.println("\nWaiting for Internet time");
 
-  while(!time(nullptr)){
-     Serial.print("*");
-     delay(1000);
+  while (!time(nullptr)) {
+    Serial.print("*");
+    delay(1000);
   }
 
   Serial.println("\nTime response....OK");
@@ -149,5 +148,18 @@ void loop() {
   // feature.check_scheduled_valve_control();
   // feature.check_scheduled_health_scan();
   // feature.send_waterflow_data();
-  delay(1000);
+  delay(100);
 }
+
+// for (int i = 0; i < valve_control_schedule_count; i++) {
+//   int day = valve_control_schedules[i].day;
+//   int start_time = valve_control_schedules[i].start_time;
+//   int end_time = valve_control_schedules[i].end_time;
+//   Serial.print("[LOGS] Scheduled valve control: ");
+//   Serial.print("Day: ");
+//   Serial.print(day);
+//   Serial.print(" Start time: ");
+//   Serial.print(start_time);
+//   Serial.print(" End time: ");
+//   Serial.println(end_time);
+// }

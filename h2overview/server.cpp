@@ -6,8 +6,8 @@ MQTTserver::MQTTserver() : client(espClient) {
 
 void MQTTserver::setup_mqtt(const char* mqtt_server, void (*callback)(char*, uint8_t*, unsigned int)) {
   client.setServer(mqtt_server, 1883);
-  client.subscribe("h2overview/H2O-12345/#");
   client.setCallback(callback);
+  client.subscribe("h2overview/H2O-12345/#");
 }
 
 void MQTTserver::reconnect() {
@@ -20,13 +20,11 @@ void MQTTserver::reconnect() {
     // Attempt to connect
     if (client.connect(clientId)) {
       Serial.println("connected");
-      // Subscribe to the topic
       client.subscribe("h2overview/H2O-12345/#");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
       delay(5000);
     }
   }
