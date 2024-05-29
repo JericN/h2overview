@@ -1,22 +1,21 @@
 #include "feature.h"
 
-unsigned long Feature::waterflow_lastTime = 0;
+unsigned long Feature::waterflow_lastTime = -1 * 60 * 60 * 1000;
 
 // Constructor implementation
 Feature::Feature(Hardware& hardware, MQTTserver& server) : hardware(hardware), server(server) {}
 
 void Feature::local_valve_control() {
-  Serial.println("[LOGS] Start local valve control");
-
   int buttonPress = hardware.get_solenoid_button_press();
   if (buttonPress) {
+    Serial.println("[LOGS] Start local valve control");
     int state = hardware.get_solenoid_state();
     hardware.set_solenoid_state(!state);
     hardware.set_led_state(!state);
     server.set_valve_state(!state);
+    Serial.println("[LOGS] Done local valve control");
   }
 
-  Serial.println("[LOGS] Done local valve control");
 }
 
 void Feature::remote_valve_control(char* value) {
@@ -70,14 +69,20 @@ int Feature::pressure_leak_scanner(int duration) {
   hardware.set_solenoid_state(CLOSE);
 
   int start_time = millis();
+  Serial.print("[OUTPUT] Scanning for leaks");
   while (millis() - start_time < duration - 10000) {
     // TODO: if (get_interrupt()) return 0;
+    Serial.print(".");
     delay(1000);
   }
+  Serial.println();
 
   float final_pressure = hardware.read_average_water_pressure(5000);
   bool is_leak_detected = initial_pressure - final_pressure > PRESSURE_LEAK_THRESHOLD;
-
+  Serial.print("[OUTPUT] Initial pressure: ");
+  Serial.println(initial_pressure);
+  Serial.print("[OUTPUT] Final pressure: ");
+  Serial.println(final_pressure);
   // TODO: classify leak as big or small
   if (is_leak_detected) {
     Serial.println("[LOGS] `leak` detected in recommended scan!");
@@ -252,16 +257,15 @@ void Feature::set_scheduled_health_scan(char* value) {
   Serial.println("[LOGS] Done setting scheduled health scan");
 }
 
-// FIXME:
-// FIXME:
+// FIXME: millis() will overflow after 50 days
 void Feature::send_waterflow_data() {
-  Serial.println("[LOGS] Start sending waterflow data");
-
   time_t now = time(nullptr);
   struct tm* utc_tm = gmtime(&now);
-  if (millis() - Feature::waterflow_lastTime < 60000 && utc_tm->tm_min == 00) {
+  if (millis() - Feature::waterflow_lastTime < 60000 && utc_tm->tm_min != 00) {
     return;
   }
+
+  Serial.println("[LOGS] Start sending waterflow data");
 
   Feature::waterflow_lastTime = millis();
   float total_water = hardware.read_cummulative_water();

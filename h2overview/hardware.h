@@ -36,7 +36,7 @@ class Hardware {
 
   // Global variable
   static unsigned long PULSE;
-  static unsigned long HOURLY_PULSE;
+  static unsigned long CUMMULATIVE_PULSE;
 
   // Debounce variables
   int buttonState;

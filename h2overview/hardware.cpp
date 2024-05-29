@@ -2,7 +2,7 @@
 
 // Initialize static variable
 unsigned long Hardware::PULSE = 0;
-unsigned long Hardware::HOURLY_PULSE = 0;
+unsigned long Hardware::CUMMULATIVE_PULSE = 0;
 
 Hardware::Hardware() {
   // Constructor
@@ -11,7 +11,7 @@ Hardware::Hardware() {
 // Interrupt handler
 void IRAM_ATTR Hardware::pulse_counter() {
   Hardware::PULSE++;
-  Hardware::HOURLY_PULSE++;
+  Hardware::CUMMULATIVE_PULSE++;
 }
 
 // Initialize pins
@@ -99,7 +99,7 @@ float Hardware::read_waterflow_rate(int time) {
 
 // Read the cummulative water flow
 float Hardware::read_cummulative_water() {
-  float output = 8.5714 * Hardware::HOURLY_PULSE;
-  Hardware::HOURLY_PULSE = 0;
+  float output = 8.5714 * Hardware::CUMMULATIVE_PULSE;
+  Hardware::CUMMULATIVE_PULSE = 0;
   return output;
 }
