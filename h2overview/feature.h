@@ -47,6 +47,7 @@ class Feature {
   int manual_leak_scan(char* value);
   void check_scheduled_valve_control();
   void check_scheduled_health_scan();
+  void is_alive();
 
 
   void send_waterflow_data();

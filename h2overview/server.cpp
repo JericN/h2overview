@@ -100,6 +100,13 @@ void MQTTserver::send_waterflow(Waterflow flow) {
   free(payload);
 }
 
+void MQTTserver::set_alive() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.publish("h2overview/out/H2O-12345/is_alive", "1");
+}
+
 void MQTTserver::loop() {
   if (!client.connected()) {
     reconnect();

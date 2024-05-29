@@ -31,8 +31,10 @@ ScheduleEntry valve_control_schedules[50];
 // const char* password = "93291123aaaA.";
 // const char* ssid = "Jeric";
 // const char* password = "12121212";
-const char* ssid = "..";
-const char* password = "qqwweerr";
+// const char* ssid = "..";
+// const char* password = "qqwweerr";
+const char* ssid = "Raspberry";
+const char* password = "54321edcba";
 const char* mqtt_server = "broker.mqtt-dashboard.com";
 
 int timezone = 8* 3600;
@@ -91,6 +93,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   } else if (strcmp(topic, "h2overview/H2O-12345/scheduled_health_scan") == 0) {
     feature.set_scheduled_health_scan(value);
 
+  } else if(strcmp(topic, "h2overview/H2O-12345/is_alive") == 0) {
+    feature.is_alive();
+    
   } else {
     Serial.println("Invalid topic");
   }
@@ -111,7 +116,7 @@ void setup() {
 
   // Initialize hardware pins
   Serial.println("Initializing hardware pins...");
-  hardware.initialize_pins();
+  // hardware.initialize_pins();
   Serial.println("Hardware pins initialized");
 
   // Setup WiFi
@@ -138,10 +143,11 @@ void setup() {
 
 void loop() {
   server.loop();
+  Serial.println("looping...");
 
-  feature.local_valve_control();
-  feature.check_scheduled_valve_control();
-  feature.check_scheduled_health_scan();
-  feature.send_waterflow_data();
-  delay(100);
+  // feature.local_valve_control();
+  // feature.check_scheduled_valve_control();
+  // feature.check_scheduled_health_scan();
+  // feature.send_waterflow_data();
+  delay(1000);
 }

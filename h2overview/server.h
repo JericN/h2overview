@@ -28,6 +28,9 @@ class MQTTserver {
   
   void send_waterflow(Waterflow flow);
   void setup_mqtt(const char* mqtt_server, void (*callback)(char*, uint8_t*, unsigned int));
+
+  void set_alive();
+
   void loop();
 
  private:

@@ -277,3 +277,9 @@ void Feature::send_waterflow_data() {
 
   Serial.println("[LOGS] Done sending waterflow data");
 }
+
+
+void Feature::is_alive() {
+  Serial.println("[LOGS] I am alive");
+  server.set_alive();
+}

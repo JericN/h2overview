@@ -101,6 +101,7 @@ def on_message(client, userdata, msg):
     flag_name = msg.topic.split("/")[3]
 
     if flag_name in [
+        "is_alive",
         "is_valve_open",
         "is_manual_leak_scan_running",
         "is_automated_scan_running",
@@ -144,6 +145,8 @@ def listen_to_device_flags(device_id: str):
                 doc_id = change.document.id
                 value = change.document.to_dict()
                 print(f"[LOGS] Device: {device_id} | Modified document: {doc_id} => {value}")
+                if doc_id == "is_alive" and value["value"]:
+                    continue
                 value["timestamp"] = value["timestamp"].isoformat()
                 payload = json.dumps(value)
                 publish_update(device_id, doc_id, payload)
