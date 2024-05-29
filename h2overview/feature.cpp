@@ -26,7 +26,7 @@ void Feature::remote_valve_control(char* value) {
   deserializeJson(doc, value);
 
   // TODO: check if its "True" or "true" or "1"
-  int remoteState = !strcmp(doc["value"], "true");
+  int remoteState = doc["value"];
   int localState = hardware.get_solenoid_state();
 
   if (remoteState != localState) {
@@ -72,7 +72,9 @@ int Feature::pressure_leak_scanner(int duration) {
   Serial.print("[OUTPUT] Scanning for leaks");
   while (millis() - start_time < duration - 10000) {
     // TODO: if (get_interrupt()) return 0;
-    Serial.print(".");
+    Serial.print("[OUTPUT] Progress: ");
+    Serial.print((millis() - start_time) / (duration - 10000));
+    Serial.print("%");
     delay(1000);
   }
   Serial.println();
@@ -129,10 +131,10 @@ void Feature::manual_leak_scan(char* value) {
   deserializeJson(doc, value);
 
   const char* scan_type = doc["scan_type"];
-  int is_active = strcmp(doc["value"], "true") == 0 ? 1 : 0;
+  int is_active = doc["value"];
 
   if (!is_active) {
-    return -1;
+    return;
   }
 
   int is_leak_detected = 0;
@@ -147,7 +149,7 @@ void Feature::manual_leak_scan(char* value) {
     is_leak_detected = -1;
   }
 
-  server.set_manual_scan_result(is_leak_detected);
+  server.set_manual_scan_result(is_leak_detected, scan_type);
   server.set_manual_leak_scan_running(0);
 }
 
@@ -261,7 +263,7 @@ void Feature::set_scheduled_health_scan(char* value) {
 void Feature::send_waterflow_data() {
   time_t now = time(nullptr);
   struct tm* utc_tm = gmtime(&now);
-  if (millis() - Feature::waterflow_lastTime < 60000 && utc_tm->tm_min != 00) {
+  if (millis() - Feature::waterflow_lastTime < 60000 || utc_tm->tm_min != 00) {
     return;
   }
 

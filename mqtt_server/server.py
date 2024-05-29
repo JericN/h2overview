@@ -57,37 +57,43 @@ def update_flag(device_id, flag_name, payload):
         print(f"[ERROR] Failed to update flag {flag_name} for device {device_id}: {e}")
 
 
-def update_scan_results(device_id, flag_name, payload):
+def update_scan_results(device_id, scan_name, payload):
     """
     Updates the scan results in Firestore for the given device.
     """
+
+    json_data = json.loads(payload)
     try:
-        db.collection(f"devices/{device_id}/{flag_name}").document().set(
-            {"leak_result": str(payload), "timestamp": firestore.SERVER_TIMESTAMP}
+        db.collection(f"devices/{device_id}/{scan_name}").document().set(
+            {
+                "leak_result": json_data["result"],
+                "scan_type": json_data["scan_type"],
+                "timestamp": firestore.SERVER_TIMESTAMP
+            }
         )
-        print(f"[LOGS] Scan results {flag_name} updated for device {device_id}")
+        print(f"[LOGS] Scan results {scan_name} updated for device {device_id}")
     except Exception as e:
         print(
-            f"[ERROR] Failed to update scan results {flag_name} for device {device_id}: {e}"
+            f"[ERROR] Failed to update scan results {scan_name} for device {device_id}: {e}"
         )
 
 
-def update_sensor_reading(device_id, flag_name, payload):
+def update_sensor_reading(device_id, sensor_name, payload):
     """
     Updates the sensor reading in Firestore for the given device.
     """
     try:
         json_data = json.loads(payload)
-        db.collection(f"devices/{device_id}/{flag_name}").document().set(
+        db.collection(f"devices/{device_id}/{sensor_name}").document().set(
             {
                 "value": json_data["value"],
                 "timestamp": datetime.fromtimestamp(json_data["timestamp"]),
             }
         )
-        print(f"[LOGS] Sensor reading {flag_name} updated for device {device_id}")
+        print(f"[LOGS] Sensor reading {sensor_name} updated for device {device_id}")
     except Exception as e:
         print(
-            f"[ERROR] Failed to update sensor reading {flag_name} for device {device_id}: {e}"
+            f"[ERROR] Failed to update sensor reading {sensor_name} for device {device_id}: {e}"
         )
 
 

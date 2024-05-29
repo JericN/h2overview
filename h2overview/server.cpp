@@ -51,19 +51,26 @@ void MQTTserver::set_automated_scan_running(int state) {
   client.publish("h2overview/out/H2O-12345/is_automated_scan_running", String(state).c_str());
 }
 
-void MQTTserver::set_manual_scan_result(int result) {
+void MQTTserver::set_manual_scan_result(int result, const char* scan_type) {
   if (!client.connected()) {
     reconnect();
   }
-  const char* payload;
+  const char* res;
   if (result == 0) {
-    payload = "no_leak";
+    res = "no_leak";
   } else if (result == 1) {
-    payload = "leak_detected";
+    res = "leak_detected";
   } else {
-    payload = "failed";
+    res = "failed";
   }
+
+  char* payload = (char*)malloc(100);
+  if (payload == nullptr) {
+    return;
+  }
+  snprintf(payload, 100, "{\"scan_type\": \"%s\", \"result\": \"%s\"}", scan_type, res);
   client.publish("h2overview/out/H2O-12345/manual_results", payload);
+  free(payload);
 }
 
 void MQTTserver::set_health_scan_result(int result) {
@@ -71,16 +78,22 @@ void MQTTserver::set_health_scan_result(int result) {
     reconnect();
   }
 
-  const char* payload;
+  const char* res;
   if (result == 0) {
-    payload = "no_leak";
+    res = "no_leak";
   } else if (result == 1) {
-    payload = "leak_detected";
+    res = "leak_detected";
   } else {
-    payload = "failed";
+    res = "failed";
   }
   
+  char* payload = (char*)malloc(100);
+  if (payload == nullptr) {
+    return;
+  }
+  snprintf(payload, 100, "{\"scan_type\": \"long\", \"result\": \"%s\"}", res);
   client.publish("h2overview/out/H2O-12345/auto_results", payload);
+  free(payload);
 }
 
 void MQTTserver::send_waterflow(Waterflow flow) {

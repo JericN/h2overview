@@ -23,7 +23,7 @@ class MQTTserver {
   void set_manual_leak_scan_running(int state);
   void set_automated_scan_running(int state);
 
-  void set_manual_scan_result(int result);
+  void set_manual_scan_result(int result, const char* scan_type);
   void set_health_scan_result(int result);
   
   void send_waterflow(Waterflow flow);
