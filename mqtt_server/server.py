@@ -1,41 +1,22 @@
 import time
 import threading
-from firebase_admin import credentials, firestore, messaging
+from firebase_admin import credentials, firestore
 import firebase_admin
 import paho.mqtt.client as mqtt
 import json
 
-def send_fcm_message(token, title, body):
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title=title,
-            body=body,
-        ),
-        token=token,
-    )
-
-    try:
-        response = messaging.send(message)
-        print('Successfully sent message:', response)
-    except firebase_admin.exceptions.FirebaseError as e:
-        print('Error sending message:', e)
-
-
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
     if rc == 0:
-        # Subscribing to multiple topics
         topics = [("h2overview/out/#", 0)]
         client.subscribe(topics)
     else:
-        print("Connection failed")
+        print("MQTT Connection failed")
 
 def on_message(client, userdata, msg):
     print(f"Message received on topic {msg.topic} with payload {msg.payload}")
-
     device_id = msg.topic.split('/')[2]
     flag_name = msg.topic.split('/')[3]
-    print(f"Device ID: {device_id}, Flag Name: {flag_name}, Flag Value: {msg.payload}")
 
     # Check for flag updates
     if flag_name == 'is_valve_open' or flag_name == 'is_manual_leak_scan_running' or flag_name == 'is_automated_scan_running':
