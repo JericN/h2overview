@@ -41,9 +41,15 @@ def on_message(client, userdata, msg):
 
 
     elif flag_name == 'manual_results' or flag_name == 'auto_results':
+        leak_result = ''
+        if msg.payload == b'1':
+            leak_result = 'big_leak'
+        else:
+            leak_result = 'no_leak'
+        
         try:
             db.collection(f'devices/{device_id}/{flag_name}').document().set({
-                'leak_result': bool(int(msg.payload)),
+                'leak_result': leak_result,
                 'timestamp': firestore.SERVER_TIMESTAMP
             })
             print(f"Flag {flag_name} updated for device {device_id}")
@@ -101,8 +107,9 @@ def listen_to_device_flags(device_id: str):
             elif change.type.name == 'MODIFIED':
                 doc_id = change.document.id
                 value = change.document.to_dict()
+                value['timestamp'] = value['timestamp'].isoformat()
                 payload = json.dumps(value)
-                print(f'Device: {device_id} | Modified document: {pref_name} => {pref_value}')
+                print(f'Device: {device_id} | Modified document: {doc_id} => {payload}')
                 publish_update(device_id, doc_id, payload)
     try:
         flags_ref = db.collection(f'devices/{device_id}/flags')
