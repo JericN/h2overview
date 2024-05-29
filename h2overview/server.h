@@ -14,6 +14,11 @@ typedef struct {
   float value;
 } Waterflow;
 
+typedef struct {
+  unsigned long timestamp;  // Epoch time
+  float value;
+} Pressure;
+
 
 class MQTTserver {
  public:
@@ -27,6 +32,7 @@ class MQTTserver {
   void set_health_scan_result(int result);
   
   void send_waterflow(Waterflow flow);
+  void send_pressure(Pressure pressure);
   void setup_mqtt(const char* mqtt_server, void (*callback)(char*, uint8_t*, unsigned int));
 
   void set_alive();

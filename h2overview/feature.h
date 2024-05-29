@@ -56,13 +56,14 @@ class Feature {
   void check_scheduled_health_scan();
   void is_alive();
 
-
   void send_waterflow_data();
+  void send_pressure_data();
 
  private:
   Hardware& hardware;
   MQTTserver& server;
   static unsigned long waterflow_lastTime;
+  static unsigned long pressure_lastTime;
 
   int waterflow_leak_scanner(int duration);
   int pressure_leak_scanner(int duration);

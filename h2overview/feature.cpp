@@ -1,6 +1,7 @@
 #include "feature.h"
 
 unsigned long Feature::waterflow_lastTime = -1 * 60 * 60 * 1000;
+unsigned long Feature::pressure_lastTime = -1 * 60 * 60 * 1000;
 
 // Constructor implementation
 Feature::Feature(Hardware& hardware, MQTTserver& server) : hardware(hardware), server(server) {}
@@ -277,6 +278,24 @@ void Feature::send_waterflow_data() {
   server.send_waterflow(waterflow_data);
 
   Serial.println("[LOGS] Done sending waterflow data");
+}
+
+void Feature::send_pressure_data() {
+  time_t now = time(nullptr);
+  struct tm* utc_tm = gmtime(&now);
+  if (millis() - Feature::pressure_lastTime < 60000 || utc_tm->tm_min != 00) {
+    return;
+  }
+
+  Serial.println("[LOGS] Start sending pressure data");
+  Feature::pressure_lastTime = millis();
+  float pressure = hardware.read_average_water_pressure(5000);
+  Pressure pressure_data;
+  pressure_data.timestamp = now;
+  pressure_data.value = pressure;
+  server.send_pressure(pressure_data);
+
+  Serial.println("[LOGS] Done sending pressure data");
 }
 
 void Feature::is_alive() {

@@ -111,6 +111,21 @@ void MQTTserver::send_waterflow(Waterflow flow) {
   free(payload);
 }
 
+void MQTTserver::send_pressure(Pressure pressure) {
+  if (!client.connected()) {
+    reconnect();
+  }
+
+  char* payload = (char*)malloc(100);
+  if (payload == nullptr) {
+    return;
+  }
+
+  snprintf(payload, 100, "{\"timestamp\": %lu, \"value\": %f}", pressure.timestamp, pressure.value);
+  client.publish("h2overview/out/H2O-12345/pressure", payload);
+  free(payload);
+}
+
 void MQTTserver::set_alive() {
   if (!client.connected()) {
     reconnect();

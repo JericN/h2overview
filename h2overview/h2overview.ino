@@ -141,6 +141,8 @@ void loop() {
   feature.check_scheduled_valve_control();
   feature.check_scheduled_health_scan();
   feature.send_waterflow_data();
+  feature.send_pressure_data();
+  
   delay(100);
 }
 
