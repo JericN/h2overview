@@ -124,7 +124,7 @@ int Feature::deep_leak_scanner(int repeat) {
   }
 }
 
-int Feature::manual_leak_scan(char* value) {
+void Feature::manual_leak_scan(char* value) {
   DynamicJsonDocument doc(200);
   deserializeJson(doc, value);
 

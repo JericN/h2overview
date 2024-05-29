@@ -12,13 +12,6 @@ Feature feature(hardware, server);
 
 #define DEVICE_ID "H2O-12345"
 
-#define SOLENOID_OPEN 0
-#define SOLENOID_CLOSED 1
-
-#define SCAN_RETRIES 5
-#define SCAN_COUNT 5
-#define BIG_LEAK_THRESHOLD 0.5
-
 bool is_scheduled_health_scan = false;
 int health_scan_schedule_count = 0;
 ScheduleEntry health_scan_schedules[50];
@@ -115,7 +108,7 @@ void setup() {
 
   // Initialize hardware pins
   Serial.println("Initializing hardware pins...");
-  // hardware.initialize_pins();
+  hardware.initialize_pins();
   Serial.println("Hardware pins initialized");
 
   // Setup WiFi
@@ -144,10 +137,10 @@ void loop() {
   server.loop();
   Serial.println("looping...");
 
-  // feature.local_valve_control();
-  // feature.check_scheduled_valve_control();
-  // feature.check_scheduled_health_scan();
-  // feature.send_waterflow_data();
+  feature.local_valve_control();
+  feature.check_scheduled_valve_control();
+  feature.check_scheduled_health_scan();
+  feature.send_waterflow_data();
   delay(100);
 }
 

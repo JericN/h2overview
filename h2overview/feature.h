@@ -51,7 +51,7 @@ class Feature {
   void remote_valve_control(char* value);
   void set_scheduled_health_scan(char* value);
   void set_scheduled_valve_control(char* value);
-  int manual_leak_scan(char* value);
+  void manual_leak_scan(char* value);
   void check_scheduled_valve_control();
   void check_scheduled_health_scan();
   void is_alive();
