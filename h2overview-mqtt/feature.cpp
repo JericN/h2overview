@@ -262,22 +262,18 @@ void Feature::check_scheduled_health_scan() {
 void Feature::send_waterflow_data() {
   Serial.println("[LOGS] Start sending waterflow data");
 
-  if (millis() - Feature::waterflow_lastTime < 60000) {
-    return;
-  } 
-
   time_t now = time(nullptr);
   struct tm* utc_tm = gmtime(&now);
-
-  int now_minute = utc_tm->tm_hour * 60 + utc_tm->tm_min;
-
-
-  if (utc_tm->tm_min == 00) {
-    float total_water = hardware.read_cummulative_water();
-    Waterflow waterflow_data;
-    waterflow_data.timestamp = now;
-    waterflow_data.value = total_water;
-    server.send_waterflow(waterflow_data);
-    Feature::waterflow_lastTime = millis();
+  if (millis() - Feature::waterflow_lastTime < 60000 && utc_tm->tm_min == 00) {
+    return;
   }
+
+  Feature::waterflow_lastTime = millis();
+  float total_water = hardware.read_cummulative_water();
+  Waterflow waterflow_data;
+  waterflow_data.timestamp = now;
+  waterflow_data.value = total_water;
+  server.send_waterflow(waterflow_data);
+
+  Serial.println("[LOGS] Done sending waterflow data");
 }
