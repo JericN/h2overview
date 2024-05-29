@@ -1,17 +1,25 @@
 import time
 import threading
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, messaging
 import firebase_admin
 import paho.mqtt.client as mqtt
 import json
 
-# MQTT configuration
-MQTT_BROKER = "broker.mqtt-dashboard.com"
-MQTT_PORT = 1883
-MQTT_KEEPALIVE = 60
+def send_fcm_message(token, title, body):
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title=title,
+            body=body,
+        ),
+        token=token,
+    )
 
-# MQTT client setup
-mqtt_client = mqtt.Client()
+    try:
+        response = messaging.send(message)
+        print('Successfully sent message:', response)
+    except firebase_admin.exceptions.FirebaseError as e:
+        print('Error sending message:', e)
+
 
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
@@ -29,6 +37,7 @@ def on_message(client, userdata, msg):
     flag_name = msg.topic.split('/')[3]
     print(f"Device ID: {device_id}, Flag Name: {flag_name}, Flag Value: {msg.payload}")
 
+    # Check for flag updates
     if flag_name == 'is_valve_open' or flag_name == 'is_manual_leak_scan_running' or flag_name == 'is_automated_scan_running':
         try:
             db.collection(f'devices/{device_id}/flags').document(flag_name).set({
@@ -39,7 +48,7 @@ def on_message(client, userdata, msg):
         except Exception:
             print(f"Failed to update flag {flag_name} for device {device_id}")
 
-
+    # Check for scan results updates
     elif flag_name == 'manual_results' or flag_name == 'auto_results':
         leak_result = ''
         if msg.payload == b'1':
@@ -56,7 +65,7 @@ def on_message(client, userdata, msg):
         except Exception:
             print(f"Failed to update flag {flag_name} for device {device_id}")
 
-
+    # Check for sensor reading updates
     elif flag_name == 'waterflow' or flag_name =='pressure':
         json_data = json.loads(msg.payload)
         try:
@@ -72,11 +81,6 @@ def on_message(client, userdata, msg):
     else:
         print("Unknown flag name")
 
-
-
-mqtt_client.on_connect = on_connect
-mqtt_client.on_message = on_message
-mqtt_client.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE)
 
 def publish_update(device_id: str, doc_id: str, payload: str):
     """
@@ -138,6 +142,20 @@ def initialize_device_listeners():
         print("Failed to set up device listener")
 
 
+
+# MQTT configuration
+MQTT_BROKER = "broker.mqtt-dashboard.com"
+MQTT_PORT = 1883
+MQTT_KEEPALIVE = 600
+
+mqtt_client.on_connect = on_connect
+mqtt_client.on_message = on_message
+mqtt_client.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE)
+
+
+# MQTT client setup
+mqtt_client = mqtt.Client()
+
 # Initialize Firebase
 cred = credentials.Certificate('../firebase_key.json')
 firebase_admin.initialize_app(cred)
@@ -159,6 +177,6 @@ try:
         time.sleep(1)
 except KeyboardInterrupt:
     print("Stopping the listener...")
-    delete_event.set()  # Signal to stop the main loop
+    delete_event.set()
     mqtt_client.disconnect()
     mqtt_thread.join()
