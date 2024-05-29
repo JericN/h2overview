@@ -53,35 +53,52 @@ void MQTTserver::set_automated_scan_running(int state) {
   client.publish("h2overview/out/H2O-12345/is_automated_scan_running", String(state).c_str());
 }
 
-void MQTTserver::set_scan_result(int result) {
+void MQTTserver::set_manual_scan_result(int result) {
   if (!client.connected()) {
     reconnect();
   }
-  client.publish("h2overview/out/H2O-12345/manual_results", String(result).c_str());
+  const char* payload;
+  if (result == 0) {
+    payload = "no_leak";
+  } else if (result == 1) {
+    payload = "leak_detected";
+  } else {
+    payload = "failed";
+  }
+  client.publish("h2overview/out/H2O-12345/manual_results", payload);
 }
-
 
 void MQTTserver::set_health_scan_result(int result) {
   if (!client.connected()) {
     reconnect();
   }
-  client.publish("h2overview/out/H2O-12345/auto_results", String(result).c_str());
-}
 
+  const char* payload;
+  if (result == 0) {
+    payload = "no_leak";
+  } else if (result == 1) {
+    payload = "leak_detected";
+  } else {
+    payload = "failed";
+  }
+  
+  client.publish("h2overview/out/H2O-12345/auto_results", payload);
+}
 
 void MQTTserver::send_waterflow(Waterflow flow) {
   if (!client.connected()) {
     reconnect();
   }
-  //convert WaterFlow to string
+
   char* payload = (char*)malloc(100);
-  sprintf(payload, "{\"timestamp\": %lu, \"value\": %f}", flow.timestamp, flow.value);
-  Serial.println(payload);
+  if (payload == nullptr) {
+    return;
+  }
+
+  snprintf(payload, 100, "{\"timestamp\": %lu, \"value\": %f}", flow.timestamp, flow.value);
   client.publish("h2overview/out/H2O-12345/waterflow", payload);
   free(payload);
 }
-
-
 
 void MQTTserver::loop() {
   if (!client.connected()) {

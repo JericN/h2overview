@@ -140,10 +140,10 @@ int Feature::manual_leak_scan(char* value) {
     is_leak_detected = deep_leak_scanner(LONG_LEAK_SCAN_REPEATE);
   } else {
     Serial.println("[LOGS] Invalid scan type");
-    return -1;
+    is_leak_detected = -1;
   }
-
-  server.set_scan_result(is_leak_detected);
+  
+  server.set_manual_scan_result(is_leak_detected);
   server.set_manual_leak_scan_running(0);
 }
 

@@ -22,8 +22,10 @@ class MQTTserver {
   void set_valve_state(int state);
   void set_manual_leak_scan_running(int state);
   void set_automated_scan_running(int state);
-  void set_scan_result(int result);
+
+  void set_manual_scan_result(int result);
   void set_health_scan_result(int result);
+  
   void send_waterflow(Waterflow flow);
   void setup_mqtt(const char* mqtt_server, void (*callback)(char*, uint8_t*, unsigned int));
   void loop();
