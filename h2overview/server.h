@@ -1,55 +1,37 @@
-#ifndef FIREBASE_SERVER_H
-#define FIREBASE_SERVER_H
+#ifndef SERVER_H
+#define SERVER_H
 
 #include <Arduino.h>
-#include <ArduinoJson.h>
-#include <ESP8266Firebase.h>
-// #include <ESP32Firebase.h>
-
-// Firebase endpoint
-#define REFERENCE_URL "https://h2overview-iot-default-rtdb.asia-southeast1.firebasedatabase.app/"
+// #include <ESP8266WiFi.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
 
 // Device serial number
-#define DEVICE_SERIAL "H2O-1234"
-
-#define SUCCESS 200
-#define FAILURE 400
+#define DEVICE_SERIAL "H2O-12345"
 
 typedef struct {
   unsigned long timestamp;  // Epoch time
   float value;
 } Waterflow;
 
-typedef struct {
-  bool scheduled;
-  unsigned long duration;
-  unsigned long start_time;
-  unsigned long end_time;
-} LeakPref;
 
-class FirebaseServer {
+class MQTTserver {
  public:
-  FirebaseServer();
+  MQTTserver();
 
-  // Preferences
-  LeakPref get_small_leak_preference();
-
-  // Flags
-  bool get_valve_state();
-  bool is_leak_scanning();
-  bool is_leak_detected();
   void set_valve_state(int state);
-  void set_leak_scanning(int state);
-  void set_leak_detected(int state);
-
-  // Data
-  void send_waterflow(Waterflow data);
+  void set_manual_leak_scan_running(int state);
+  void set_automated_scan_running(int state);
+  void set_scan_result(int result);
+  void set_health_scan_result(int result);
+  void send_waterflow(Waterflow flow);
+  void setup_mqtt(const char* mqtt_server, void (*callback)(char*, uint8_t*, unsigned int));
+  void loop();
 
  private:
-  static Firebase firebase;
-  static String pref_path;
-  static String flag_path;
-  static String data_path;
+  void reconnect();
+  WiFiClient espClient;
+  PubSubClient client;
 };
 
-#endif  // FIREBASE_SERVER_H
+#endif  // SERVER_H
