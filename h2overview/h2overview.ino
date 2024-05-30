@@ -59,6 +59,7 @@ void setup_wifi() {
 // =============================================================================
 
 void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.println("Callback triggered");
   // copy the payload to a string
   char value[length + 1];
   for (int i = 0; i < length; i++) {
@@ -81,9 +82,47 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   } else if (strcmp(topic, "h2overview/H2O-12345/scheduled_valve_control") == 0) {
     feature.set_scheduled_valve_control(value);
+    for (int i = 0; i < valve_control_schedule_count; i++) {
+      int num_days = valve_control_schedules[i].num_days;
+      int *days = valve_control_schedules[i].days;
+      int start_time = valve_control_schedules[i].start_time;
+      int end_time = valve_control_schedules[i].end_time;
+
+      Serial.print("[LOGS] Scheduled valve control: ");
+      Serial.print("Num Day: ");
+      Serial.print(num_days);
+      Serial.print(" Day: ");
+      for (int j = 0; j < num_days; j++) {
+        Serial.print(days[j]);
+        Serial.print(" ");
+      }
+      Serial.print(" Start time: ");
+      Serial.print(start_time);
+      Serial.print(" End time: ");
+      Serial.println(end_time);
+    }
 
   } else if (strcmp(topic, "h2overview/H2O-12345/scheduled_health_scan") == 0) {
     feature.set_scheduled_health_scan(value);
+    for (int i = 0; i < health_scan_schedule_count; i++) {
+      int num_days = health_scan_schedules[i].num_days;
+      int *days = health_scan_schedules[i].days;
+      int start_time = health_scan_schedules[i].start_time;
+      int end_time = health_scan_schedules[i].end_time;
+
+      Serial.print("[LOGS] Scheduled health scan: ");
+      Serial.print("Num Day: ");
+      Serial.print(num_days);
+      Serial.print(" Day: ");
+      for (int j = 0; j < num_days; j++) {
+        Serial.print(days[j]);
+        Serial.print(" ");
+      }
+      Serial.print(" Start time: ");
+      Serial.print(start_time);
+      Serial.print(" End time: ");
+      Serial.println(end_time);
+    }
 
   } else if (strcmp(topic, "h2overview/H2O-12345/is_alive") == 0) {
     feature.is_alive();
@@ -108,7 +147,7 @@ void setup() {
 
   // Initialize hardware pins
   Serial.println("Initializing hardware pins...");
-  hardware.initialize_pins();
+  // hardware.initialize_pins();
   Serial.println("Hardware pins initialized");
 
   // Setup WiFi
@@ -137,13 +176,13 @@ void loop() {
   server.loop();
   Serial.println("looping...");
 
-  feature.local_valve_control();
-  feature.check_scheduled_valve_control();
-  feature.check_scheduled_health_scan();
-  feature.send_waterflow_data();
-  feature.send_pressure_data();
-  
-  delay(100);
+  // feature.local_valve_control();
+  // feature.check_scheduled_valve_control();
+  // feature.check_scheduled_health_scan();
+  // feature.send_waterflow_data();
+  // feature.send_pressure_data();
+
+  delay(1000);
 }
 
 // for (int i = 0; i < valve_control_schedule_count; i++) {

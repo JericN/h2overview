@@ -16,7 +16,6 @@ void Feature::local_valve_control() {
     server.set_valve_state(!state);
     Serial.println("[LOGS] Done local valve control");
   }
-
 }
 
 void Feature::remote_valve_control(char* value) {
@@ -168,7 +167,14 @@ void Feature::check_scheduled_health_scan() {
 
   // check if the current time is in the schedule
   for (int i = 0; i < health_scan_schedule_count; i++) {
-    if (health_scan_schedules[i].day == utc_now_day && health_scan_schedules[i].start_time == utc_now_minute) {
+    bool is_day_matched = false;
+    for (int j = 0; j < health_scan_schedules[i].num_days; j++) {
+      if (health_scan_schedules[i].days[j] == utc_now_day) {
+        is_day_matched = true;
+        break;
+      }
+    }
+    if (is_day_matched && health_scan_schedules[i].start_time == utc_now_minute) {
       Serial.println("[LOGS] Leak scan is started due to scheduled health scan");
       server.set_automated_scan_running(1);
       int result = deep_leak_scanner(1);
@@ -195,7 +201,15 @@ void Feature::check_scheduled_valve_control() {
 
   // TODO: make this more efficient
   for (int i = 0; i < valve_control_schedule_count; i++) {
-    if (valve_control_schedules[i].day == utc_now_day && valve_control_schedules[i].start_time == utc_now_minute) {
+    bool is_day_matched = false;
+    for (int j = 0; j < valve_control_schedules[i].num_days; j++) {
+      if (valve_control_schedules[i].days[j] == utc_now_day) {
+        is_day_matched = true;
+        break;
+      }
+    }
+
+    if (is_day_matched && valve_control_schedules[i].start_time == utc_now_minute) {
       Serial.println("[LOGS] Valve is closed due to scheduled valve control");
       hardware.set_solenoid_state(CLOSE);
       hardware.set_led_state(CLOSE);
@@ -206,7 +220,14 @@ void Feature::check_scheduled_valve_control() {
 
   // TODO: make this more efficient
   for (int i = 0; i < valve_control_schedule_count; i++) {
-    if (valve_control_schedules[i].day == utc_now_day && valve_control_schedules[i].end_time == utc_now_minute) {
+    bool is_day_matched = false;
+    for (int j = 0; j < valve_control_schedules[i].num_days; j++) {
+      if (valve_control_schedules[i].days[j] == utc_now_day) {
+        is_day_matched = true;
+        break;
+      }
+    }
+    if (is_day_matched && valve_control_schedules[i].end_time == utc_now_minute) {
       Serial.println("[LOGS] Valve is opened due to scheduled valve control");
       hardware.set_solenoid_state(OPEN);
       hardware.set_led_state(OPEN);
@@ -226,10 +247,14 @@ void Feature::set_scheduled_valve_control(char* value) {
   deserializeJson(doc, value);
   is_scheduled_valve_control = doc["is_enabled"];
 
-  JsonArray schedules = doc["schedules"];
   int i = 0;
+  JsonArray schedules = doc["schedules"];
   for (JsonVariant schedule : schedules) {
-    valve_control_schedules[i].day = schedule["day"];
+    JsonArray days = schedule["days"];
+    for (int j = 0; j < days.size(); j++) {
+      valve_control_schedules[i].days[j] = days[j];
+    }
+    valve_control_schedules[i].num_days = days.size();
     valve_control_schedules[i].start_time = schedule["start_time"];
     valve_control_schedules[i].end_time = schedule["end_time"];
     i++;
@@ -247,10 +272,14 @@ void Feature::set_scheduled_health_scan(char* value) {
   deserializeJson(doc, value);
   is_scheduled_health_scan = doc["is_enabled"];
 
-  JsonArray schedules = doc["schedules"];
   int i = 0;
+  JsonArray schedules = doc["schedules"];
   for (JsonVariant schedule : schedules) {
-    health_scan_schedules[i].day = schedule["day"];
+    JsonArray days = schedule["days"];
+    for (int j = 0; j < days.size(); j++) {
+      health_scan_schedules[i].days[j] = days[j];
+    }
+    health_scan_schedules[i].num_days = days.size();
     health_scan_schedules[i].start_time = schedule["start_time"];
     health_scan_schedules[i].end_time = -1;
     i++;

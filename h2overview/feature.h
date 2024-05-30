@@ -32,7 +32,8 @@
 typedef struct {
   int start_time;
   int end_time;
-  int day;
+  int days[20];
+  int num_days;
 } ScheduleEntry;
 
 // Global variables defined in h2overview.ino
