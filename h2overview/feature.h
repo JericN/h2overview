@@ -10,7 +10,6 @@
 #define CLOSE 0
 #define OPEN 1
 
-
 // Sensor threshold error
 #define PRESSURE_LEAK_THRESHOLD 4
 #define FLOW_LEAK_THRESHOLD 1
@@ -27,7 +26,6 @@
 #define LONG_LEAK_SCAN_FLOW_TIME 30 * 1000
 #define LONG_LEAK_SCAN_PRESSURE_TIME 1 * 60 * 1000
 #define LONG_LEAK_SCAN_REPEATE 2
-
 
 typedef struct {
   int start_time;

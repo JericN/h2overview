@@ -13,16 +13,16 @@ void MQTTserver::setup_mqtt(const char* mqtt_server, void (*callback)(char*, uin
 void MQTTserver::reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
+    Serial.print("[LOGS] Attempting MQTT connection...");
     // Create a random client ID
     char clientId[50];
     sprintf(clientId, "ESP8266Client-%04X", random(0xffff));
     // Attempt to connect
     if (client.connect(clientId)) {
-      Serial.println("connected");
+      Serial.println("[LOGS] MQTT connected");
       client.subscribe("h2overview/H2O-12345/#");
     } else {
-      Serial.print("failed, rc=");
+      Serial.print("[ERROR] failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
       delay(5000);
@@ -86,7 +86,7 @@ void MQTTserver::set_health_scan_result(int result) {
   } else {
     res = "failed";
   }
-  
+
   char* payload = (char*)malloc(100);
   if (payload == nullptr) {
     return;

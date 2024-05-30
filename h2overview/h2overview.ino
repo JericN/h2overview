@@ -36,7 +36,7 @@ int dst = 0;
 void setup_wifi() {
   delay(1000);
   Serial.println();
-  Serial.print("Connecting to ");
+  Serial.print("[LOGS] Connecting to ");
   Serial.println(ssid);
 
   WiFi.mode(WIFI_STA);
@@ -48,9 +48,8 @@ void setup_wifi() {
   }
 
   randomSeed(micros());
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
+  Serial.println("\n[LOGS] WiFi connected");
+  Serial.print("[LOGS] IP address: ");
   Serial.println(WiFi.localIP());
 }
 
@@ -59,7 +58,6 @@ void setup_wifi() {
 // =============================================================================
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.println("Callback triggered");
   // copy the payload to a string
   char value[length + 1];
   for (int i = 0; i < length; i++) {
@@ -67,7 +65,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   value[length] = '\0';
 
-  Serial.print("From topic [");
+  Serial.print("[LOGS] From topic [");
   Serial.print(topic);
   Serial.print("] Message arrived [");
   Serial.print(value);
@@ -84,11 +82,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
     feature.set_scheduled_valve_control(value);
     for (int i = 0; i < valve_control_schedule_count; i++) {
       int num_days = valve_control_schedules[i].num_days;
-      int *days = valve_control_schedules[i].days;
+      int* days = valve_control_schedules[i].days;
       int start_time = valve_control_schedules[i].start_time;
       int end_time = valve_control_schedules[i].end_time;
 
-      Serial.print("[LOGS] Scheduled valve control: ");
+      Serial.print("[OUTPUT] Scheduled valve control: ");
       Serial.print("Num Day: ");
       Serial.print(num_days);
       Serial.print(" Day: ");
@@ -106,11 +104,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
     feature.set_scheduled_health_scan(value);
     for (int i = 0; i < health_scan_schedule_count; i++) {
       int num_days = health_scan_schedules[i].num_days;
-      int *days = health_scan_schedules[i].days;
+      int* days = health_scan_schedules[i].days;
       int start_time = health_scan_schedules[i].start_time;
       int end_time = health_scan_schedules[i].end_time;
 
-      Serial.print("[LOGS] Scheduled health scan: ");
+      Serial.print("[OUTPUT] Scheduled health scan: ");
       Serial.print("Num Day: ");
       Serial.print(num_days);
       Serial.print(" Day: ");
@@ -128,12 +126,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
     feature.is_alive();
 
   } else {
-    Serial.println("Invalid topic");
+    Serial.println("[ERROR] Invalid topic");
   }
 
-  Serial.print("Callback done from topic [");
+  Serial.print("[LOGS] Callback done from topic [");
   Serial.print(topic);
-  Serial.print("]");
+  Serial.println("]");
 }
 
 // =============================================================================
@@ -146,19 +144,19 @@ void setup() {
   delay(3000);
 
   // Initialize hardware pins
-  Serial.println("Initializing hardware pins...");
-  // hardware.initialize_pins();
-  Serial.println("Hardware pins initialized");
+  Serial.println("[LOGS] Initializing hardware pins...");
+  hardware.initialize_pins();
+  Serial.println("[LOGS] Hardware pins initialized");
 
   // Setup WiFi
-  Serial.println("Setting up WiFi...");
+  Serial.println("[LOGS] Setting up WiFi...");
   setup_wifi();
-  Serial.println("WiFi setup complete");
+  Serial.println("[LOGS] WiFi setup complete");
 
   // Setup MQTT
-  Serial.println("Setting up MQTT...");
+  Serial.println("[LOGS] Setting up MQTT...");
   server.setup_mqtt(mqtt_server, callback);
-  Serial.println("MQTT setup complete");
+  Serial.println("[LOGS] MQTT setup complete");
 
   // Setup Time
   configTime(timezone, dst, "pool.ntp.org", "time.nist.gov");
@@ -169,7 +167,7 @@ void setup() {
     delay(1000);
   }
 
-  Serial.println("\nTime response....OK");
+  Serial.println("\n[LOGS] Time response....OK");
 }
 
 void loop() {
