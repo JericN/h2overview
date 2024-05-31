@@ -56,6 +56,8 @@ void setup_wifi() {
   Serial.println("\n[LOGS] WiFi connected");
   Serial.print("[LOGS] IP address: ");
   Serial.println(WiFi.localIP());
+
+  hardware.set_connection_led_state(HIGH);
 }
 
 // =============================================================================
