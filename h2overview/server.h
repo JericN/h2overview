@@ -2,8 +2,8 @@
 #define SERVER_H
 
 #include <Arduino.h>
-// #include <ESP8266WiFi.h>
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
+// #include <WiFi.h>
 #include <PubSubClient.h>
 
 // Device serial number

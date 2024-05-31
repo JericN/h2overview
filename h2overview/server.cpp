@@ -13,7 +13,7 @@ void MQTTserver::setup_mqtt(const char* mqtt_server, void (*callback)(char*, uin
 void MQTTserver::reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
-    Serial.print("[LOGS] Attempting MQTT connection...");
+    Serial.println("[LOGS] Attempting MQTT connection...");
     // Create a random client ID
     char clientId[50];
     sprintf(clientId, "ESP8266Client-%04X", random(0xffff));

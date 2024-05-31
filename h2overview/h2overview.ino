@@ -1,6 +1,6 @@
-// #include <ESP8266WiFi.h>
+#include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-#include <WiFi.h>
+// #include <WiFi.h>
 
 #include "feature.h"
 #include "hardware.h"
@@ -26,9 +26,14 @@ ScheduleEntry valve_control_schedules[50];
 // const char* password = "12121212";
 // const char* ssid = "..";
 // const char* password = "qqwweerr";
-const char* ssid = "Raspberry";
-const char* password = "54321edcba";
-const char* mqtt_server = "broker.mqtt-dashboard.com";
+//const char* ssid = "Raspberry";
+//const char* password = "54321edcba";
+//const char* ssid = "4studentstoo";
+//const char* password = "W1F14students";
+const char* ssid = "DragonsDen";
+const char* password = "iotcup2024fusrodah";
+// const char* mqtt_server = "broker.mqtt-dashboard.com";
+const char* mqtt_server = "test.mosquitto.org";
 
 int timezone = 8 * 3600;
 int dst = 0;
@@ -174,13 +179,13 @@ void loop() {
   server.loop();
   Serial.println("looping...");
 
-  // feature.local_valve_control();
-  // feature.check_scheduled_valve_control();
-  // feature.check_scheduled_health_scan();
-  // feature.send_waterflow_data();
-  // feature.send_pressure_data();
+  feature.local_valve_control();
+  feature.check_scheduled_valve_control();
+  feature.check_scheduled_health_scan();
+  feature.send_waterflow_data();
+  feature.send_pressure_data();
 
-  delay(1000);
+  delay(200);
 }
 
 // for (int i = 0; i < valve_control_schedule_count; i++) {

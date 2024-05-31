@@ -2,6 +2,8 @@
 
 unsigned long Feature::waterflow_lastTime = -1 * 60 * 60 * 1000;
 unsigned long Feature::pressure_lastTime = -1 * 60 * 60 * 1000;
+unsigned long Feature::schedule_last_trigger =  -1 * 60 * 1000;
+unsigned long Feature::health_scan_trigger = -1 * 60 * 1000;
 
 // Constructor implementation
 Feature::Feature(Hardware& hardware, MQTTserver& server) : hardware(hardware), server(server) {}
@@ -41,12 +43,15 @@ int Feature::waterflow_leak_scanner(int duration) {
   Serial.println("[LOGS] Start quick leak scan");
 
   hardware.set_solenoid_state(OPEN);
+  hardware.set_led_state(OPEN);
   delay(5000);
 
   float start_time = millis();
   bool is_leak_detected = false;
   while (millis() - start_time < duration - 5000) {
-    if (hardware.read_waterflow_rate(1000) > 1) {
+    float data = hardware.read_waterflow_rate(1000);
+    Serial.println(data);
+    if (data > 0) {
       is_leak_detected = true;
       break;
     }
@@ -55,6 +60,7 @@ int Feature::waterflow_leak_scanner(int duration) {
   if (is_leak_detected) {
     Serial.println("[LOGS] `Big leak` detected in quick scan!");
     hardware.set_solenoid_state(CLOSE);
+    hardware.set_led_state(CLOSE);
     return 1;
   } else {
     Serial.println("[LOGS] `No leak` detected in quick scan!");
@@ -67,14 +73,14 @@ int Feature::pressure_leak_scanner(int duration) {
 
   float initial_pressure = hardware.read_average_water_pressure(5000);
   hardware.set_solenoid_state(CLOSE);
+  hardware.set_led_state(CLOSE);
 
   int start_time = millis();
   Serial.print("[OUTPUT] Scanning for leaks");
   while (millis() - start_time < duration - 10000) {
     // TODO: if (get_interrupt()) return 0;
     Serial.print("[OUTPUT] Progress: ");
-    Serial.print((millis() - start_time) / (duration - 10000));
-    Serial.print("%");
+    Serial.println(millis() - start_time);
     delay(1000);
   }
   Serial.println();
@@ -92,6 +98,7 @@ int Feature::pressure_leak_scanner(int duration) {
   } else {
     Serial.println("[LOGS] `No leak` detected in recommended scan!");
     hardware.set_solenoid_state(OPEN);
+    hardware.set_led_state(OPEN);
     return 0;
   }
 }
@@ -119,6 +126,7 @@ int Feature::deep_leak_scanner(int repeat) {
   if (is_leak_detected) {
     Serial.println("[LOGS] `Big leak` detected in long scan!");
     hardware.set_solenoid_state(CLOSE);
+    hardware.set_led_state(CLOSE);
     return 1;
   } else {
     Serial.println("[LOGS] `No leak` detected in long scan!");
@@ -154,14 +162,12 @@ void Feature::manual_leak_scan(char* value) {
 }
 
 void Feature::check_scheduled_health_scan() {
-  if (!is_scheduled_health_scan) {
+  if (!is_scheduled_health_scan || millis() - Feature::health_scan_trigger < 60000) {
     return;
   }
 
-  Serial.println("[LOGS] Start checking for scheduled health scan");
-
   time_t now = time(nullptr);
-  struct tm* utc_tm = gmtime(&now);
+  struct tm* utc_tm = localtime(&now);
   int utc_now_minute = utc_tm->tm_hour * 60 + utc_tm->tm_min;
   int utc_now_day = utc_tm->tm_wday;
 
@@ -176,6 +182,7 @@ void Feature::check_scheduled_health_scan() {
     }
     if (is_day_matched && health_scan_schedules[i].start_time == utc_now_minute) {
       Serial.println("[LOGS] Leak scan is started due to scheduled health scan");
+      Feature::health_scan_trigger = millis();
       server.set_automated_scan_running(1);
       int result = deep_leak_scanner(1);
       server.set_health_scan_result(result);
@@ -183,19 +190,15 @@ void Feature::check_scheduled_health_scan() {
       break;
     }
   }
-
-  Serial.println("[LOGS] Done scheduled health scan");
 }
 
 void Feature::check_scheduled_valve_control() {
-  if (!is_scheduled_valve_control) {
+  if (!is_scheduled_valve_control || millis() - Feature::schedule_last_trigger < 60000) {
     return;
   }
 
-  Serial.println("[LOGS] Start checking for scheduled valve control");
-
   time_t now = time(nullptr);
-  struct tm* utc_tm = gmtime(&now);
+  struct tm* utc_tm = localtime(&now);
   int utc_now_minute = utc_tm->tm_hour * 60 + utc_tm->tm_min;
   int utc_now_day = utc_tm->tm_wday;
 
@@ -211,6 +214,7 @@ void Feature::check_scheduled_valve_control() {
 
     if (is_day_matched && valve_control_schedules[i].start_time == utc_now_minute) {
       Serial.println("[LOGS] Valve is closed due to scheduled valve control");
+      Feature::schedule_last_trigger = millis();
       hardware.set_solenoid_state(CLOSE);
       hardware.set_led_state(CLOSE);
       server.set_valve_state(CLOSE);
@@ -229,14 +233,13 @@ void Feature::check_scheduled_valve_control() {
     }
     if (is_day_matched && valve_control_schedules[i].end_time == utc_now_minute) {
       Serial.println("[LOGS] Valve is opened due to scheduled valve control");
+      Feature::schedule_last_trigger = millis();
       hardware.set_solenoid_state(OPEN);
       hardware.set_led_state(OPEN);
       server.set_valve_state(OPEN);
       break;
     }
   }
-
-  Serial.println("[LOGS] Done scheduled valve control");
 }
 
 void Feature::set_scheduled_valve_control(char* value) {
@@ -292,8 +295,8 @@ void Feature::set_scheduled_health_scan(char* value) {
 // FIXME: millis() will overflow after 50 days
 void Feature::send_waterflow_data() {
   time_t now = time(nullptr);
-  struct tm* utc_tm = gmtime(&now);
-  if (millis() - Feature::waterflow_lastTime < 60000 || utc_tm->tm_min != 00) {
+  struct tm* utc_tm = localtime(&now);
+  if (millis() - Feature::waterflow_lastTime < 10000) {
     return;
   }
 
@@ -311,7 +314,7 @@ void Feature::send_waterflow_data() {
 
 void Feature::send_pressure_data() {
   time_t now = time(nullptr);
-  struct tm* utc_tm = gmtime(&now);
+  struct tm* utc_tm = localtime(&now);
   if (millis() - Feature::pressure_lastTime < 60000 || utc_tm->tm_min != 00) {
     return;
   }
