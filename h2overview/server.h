@@ -5,6 +5,7 @@
 #include <ESP8266WiFi.h>
 // #include <WiFi.h>
 #include <PubSubClient.h>
+#include "hardware.h"
 
 // Device serial number
 #define DEVICE_SERIAL "H2O-12345"
@@ -22,7 +23,7 @@ typedef struct {
 
 class MQTTserver {
  public:
-  MQTTserver();
+  MQTTserver(Hardware& hardware);
 
   void set_valve_state(int state);
   void set_manual_leak_scan_running(int state);
@@ -41,6 +42,7 @@ class MQTTserver {
 
  private:
   void reconnect();
+  Hardware& hardware;
   WiFiClient espClient;
   PubSubClient client;
 };

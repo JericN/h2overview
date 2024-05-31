@@ -1,6 +1,6 @@
 #include "server.h"
 
-MQTTserver::MQTTserver() : client(espClient) {
+MQTTserver::MQTTserver(Hardware& hardware) : hardware(hardware), client(espClient) {
   // Constructor implementation (if needed)
 }
 
@@ -11,6 +11,7 @@ void MQTTserver::setup_mqtt(const char* mqtt_server, void (*callback)(char*, uin
 }
 
 void MQTTserver::reconnect() {
+  int connection_led_state = 0;
   // Loop until we're reconnected
   while (!client.connected()) {
     Serial.println("[LOGS] Attempting MQTT connection...");
@@ -20,11 +21,19 @@ void MQTTserver::reconnect() {
     // Attempt to connect
     if (client.connect(clientId)) {
       Serial.println("[LOGS] MQTT connected");
+      hardware.set_connection_led_state(HIGH);
       client.subscribe("h2overview/H2O-12345/#");
     } else {
       Serial.print("[ERROR] failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
+      if (connection_led_state == 0) {
+        hardware.set_connection_led_state(HIGH);
+        connection_led_state = 1;
+      } else {
+        hardware.set_connection_led_state(LOW);
+        connection_led_state = 0;
+      }
       delay(5000);
     }
   }
