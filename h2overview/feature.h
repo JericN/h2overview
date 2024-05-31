@@ -11,7 +11,7 @@
 #define OPEN 1
 
 // Sensor threshold error
-#define PRESSURE_LEAK_THRESHOLD 4
+#define PRESSURE_LEAK_THRESHOLD 1
 #define FLOW_LEAK_THRESHOLD 1
 
 // Scan settings
@@ -63,6 +63,8 @@ class Feature {
   MQTTserver& server;
   static unsigned long waterflow_lastTime;
   static unsigned long pressure_lastTime;
+  static unsigned long schedule_last_trigger;
+  static unsigned long health_scan_trigger;
 
   int waterflow_leak_scanner(int duration);
   int pressure_leak_scanner(int duration);

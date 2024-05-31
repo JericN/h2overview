@@ -20,7 +20,12 @@ void Hardware::initialize_pins() {
   pinMode(SOLENOID_RELAY_PIN, OUTPUT);
   pinMode(SOLENOID_BUTTON_PIN, INPUT_PULLUP);
   pinMode(LED_1, OUTPUT);
+  pinMode(LED_2, OUTPUT);
   attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), Hardware::pulse_counter, RISING);
+}
+
+void Hardware::set_connection_led_state(int state) {
+  digitalWrite(LED_2, state);
 }
 
 // Get the state of the solenoid
