@@ -28,10 +28,11 @@ This project aims to modernize household water control by integrating IoT hardwa
 - `server/` – MQTT server and Firebase integration for data handling
 
 ## 🤝 Contributors
-- Jeric Narte  
-- Wilson De Torres  
+- Jeric Narte
+- Led Rhoniel Salazar
+- Wilson De Torres
 - Charles Wendelle Ortiz  
-- Led Rhoniel Salazar  
-- Marc Peejay Viernes  
+- Marc Peejay Viernes
+- John Henry Galino
 
 By bringing together real-time monitoring and cloud intelligence, **h2overview** helps households minimize water waste, prevent damage from leaks, and better understand their consumption patterns — all while staying in control anytime, anywhere. 🌍💡
